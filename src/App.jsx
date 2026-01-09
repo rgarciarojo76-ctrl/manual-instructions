@@ -206,20 +206,10 @@ function App() {
         )}
 
         {!data && (
-          <div className="glass-panel" style={{
-            padding: 'var(--spacing-lg)',
-            textAlign: 'center',
-            maxWidth: '600px',
-            margin: '2rem auto'
-          }}>
+          <div className="glass-panel intro-container">
             {/* Introduction Section similar to CMR App */}
             <div style={{ marginBottom: '2.5rem' }}>
-              <h1 style={{
-                color: 'var(--accent-primary)',
-                fontSize: '2rem',
-                fontWeight: '700',
-                marginBottom: '1rem'
-              }}>
+              <h1 className="header-title">
                 Análisis Manual de Instrucciones de Equipos de Trabajo
               </h1>
               <h3 style={{
@@ -232,7 +222,7 @@ function App() {
               </h3>
               <p style={{
                 color: 'var(--text-secondary)',
-                maxWidth: '80%',
+                maxWidth: '80%', // Keep generic width logic
                 margin: '0 auto',
                 lineHeight: '1.6'
               }}>
@@ -253,19 +243,10 @@ function App() {
               </div>
             ) : (
               <div
+                className={`upload-zone ${isDragging ? 'dragging' : ''}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                style={{
-                  border: `2px dashed ${isDragging ? 'var(--accent-primary)' : '#bae6fd'}`,
-                  borderRadius: '12px',
-                  padding: '3rem 2rem',
-                  backgroundColor: isDragging ? '#f0f9ff' : '#f8fbff',
-                  transition: 'all 0.2s ease',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  marginTop: '1.5rem'
-                }}
               >
                 <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.5 }}>📄</div>
                 <h3 style={{
@@ -284,21 +265,7 @@ function App() {
                   Arrastra tu PDF aquí o usa el botón para buscarlo.
                 </p>
 
-                <label style={{
-                  display: 'inline-block',
-                  padding: '10px 24px',
-                  background: 'white',
-                  color: 'var(--accent-primary)',
-                  border: '1px solid var(--accent-primary)',
-                  borderRadius: '6px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                }}
-                  onMouseEnter={(e) => { e.target.style.background = '#f0f9ff'; }}
-                  onMouseLeave={(e) => { e.target.style.background = 'white'; }}
-                >
+                <label className="upload-btn">
                   Subir Manual de Instrucciones (PDF)
                   <input type="file" accept=".pdf" onChange={handleFileUpload} style={{ display: 'none' }} />
                 </label>
