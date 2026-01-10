@@ -135,53 +135,46 @@ function App() {
       setAnalyzing(false);
     }
   };
-} catch (err) {
-  console.error(err);
-  setError(err.message || "Error durante el análisis.");
-  setData(null);
-} finally {
-  setAnalyzing(false);
-}
+
+
+  const handleFileUpload = async (e) => {
+    processFile(e.target.files[0]);
   };
 
-const handleFileUpload = async (e) => {
-  processFile(e.target.files[0]);
-};
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
 
-const handleDragOver = (e) => {
-  e.preventDefault();
-  setIsDragging(true);
-};
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
 
-const handleDragLeave = (e) => {
-  e.preventDefault();
-  setIsDragging(false);
-};
-
-const handleDrop = (e) => {
-  e.preventDefault();
-  setIsDragging(false);
-  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-    processFile(e.dataTransfer.files[0]);
-  }
-};
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
+    }
+  };
 
 
 
-const handleLoadDemo = () => {
-  setAnalyzing(true);
-  setTimeout(() => {
-    setAnalyzing(false);
-    setData(MOCK_DATA);
-  }, 1000);
-};
+  const handleLoadDemo = () => {
+    setAnalyzing(true);
+    setTimeout(() => {
+      setAnalyzing(false);
+      setData(MOCK_DATA);
+    }, 1000);
+  };
 
-return (
-  <div className="app-container">
-    <Header />
+  return (
+    <div className="app-container">
+      <Header />
 
-    <main style={{ flex: 1 }}>
-      {/* API Key Input hidden for professional look
+      <main style={{ flex: 1 }}>
+        {/* API Key Input hidden for professional look
         <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
           <input
             type="password"
@@ -193,110 +186,110 @@ return (
         </div>
         */}
 
-      {error && (
-        <div style={{
-          maxWidth: '600px',
-          margin: '0 auto 2rem',
-          padding: '1rem',
-          background: '#fef2f2',
-          border: '1px solid #fecaca',
-          color: '#b91c1c',
-          borderRadius: '8px',
-          fontSize: '0.9rem'
-        }}>
-          <strong>Error:</strong> {error}
-        </div>
-      )}
-
-      {!data && (
-        <div className="glass-panel intro-container">
-          {/* Introduction Section similar to CMR App */}
-          <div style={{ marginBottom: '2.5rem' }}>
-            <h1 className="header-title">
-              Análisis Manual de Instrucciones de Equipos de Trabajo
-            </h1>
-            <h3 style={{
-              color: 'var(--text-primary)',
-              fontSize: '1.1rem',
-              fontWeight: '500',
-              marginBottom: '1.5rem'
-            }}>
-              Asistente virtual para la extracción y análisis de información preventiva en manuales de maquinaria
-            </h3>
-            <p style={{
-              color: 'var(--text-secondary)',
-              maxWidth: '80%', // Keep generic width logic
-              margin: '0 auto',
-              lineHeight: '1.6'
-            }}>
-              Este sistema utiliza Inteligencia Artificial para procesar el manual del fabricante, identificando automáticamente factores de riesgo, medidas de seguridad, EPIs obligatorios y procedimientos de emergencia según la normativa vigente.
-            </p>
+        {error && (
+          <div style={{
+            maxWidth: '600px',
+            margin: '0 auto 2rem',
+            padding: '1rem',
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            color: '#b91c1c',
+            borderRadius: '8px',
+            fontSize: '0.9rem'
+          }}>
+            <strong>Error:</strong> {error}
           </div>
+        )}
 
-          {/* Usage Options hidden
+        {!data && (
+          <div className="glass-panel intro-container">
+            {/* Introduction Section similar to CMR App */}
+            <div style={{ marginBottom: '2.5rem' }}>
+              <h1 className="header-title">
+                Análisis Manual de Instrucciones de Equipos de Trabajo
+              </h1>
+              <h3 style={{
+                color: 'var(--text-primary)',
+                fontSize: '1.1rem',
+                fontWeight: '500',
+                marginBottom: '1.5rem'
+              }}>
+                Asistente virtual para la extracción y análisis de información preventiva en manuales de maquinaria
+              </h3>
+              <p style={{
+                color: 'var(--text-secondary)',
+                maxWidth: '80%', // Keep generic width logic
+                margin: '0 auto',
+                lineHeight: '1.6'
+              }}>
+                Este sistema utiliza Inteligencia Artificial para procesar el manual del fabricante, identificando automáticamente factores de riesgo, medidas de seguridad, EPIs obligatorios y procedimientos de emergencia según la normativa vigente.
+              </p>
+            </div>
+
+            {/* Usage Options hidden
             <div style={{...}}>
               ...
             </div>
             */}
 
-          {analyzing ? (
-            <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>
-              Analizando documento con Gemini... <br />
-              <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Extrayendo texto y procesando riesgos...</span>
-            </div>
-          ) : (
-            <div
-              className={`upload-zone ${isDragging ? 'dragging' : ''}`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.5 }}>📄</div>
-              <h3 style={{
-                color: 'var(--accent-primary)',
-                fontSize: '1.1rem',
-                fontWeight: '600',
-                marginBottom: '0.5rem'
-              }}>
-                Análisis Automático de Manuales (IA)
-              </h3>
-              <p style={{
-                color: '#64748b',
-                marginBottom: '1.5rem',
-                fontSize: '0.9rem'
-              }}>
-                Arrastra tu PDF aquí o usa el botón para buscarlo.
-              </p>
+            {analyzing ? (
+              <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                Analizando documento con Gemini... <br />
+                <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Extrayendo texto y procesando riesgos...</span>
+              </div>
+            ) : (
+              <div
+                className={`upload-zone ${isDragging ? 'dragging' : ''}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.5 }}>📄</div>
+                <h3 style={{
+                  color: 'var(--accent-primary)',
+                  fontSize: '1.1rem',
+                  fontWeight: '600',
+                  marginBottom: '0.5rem'
+                }}>
+                  Análisis Automático de Manuales (IA)
+                </h3>
+                <p style={{
+                  color: '#64748b',
+                  marginBottom: '1.5rem',
+                  fontSize: '0.9rem'
+                }}>
+                  Arrastra tu PDF aquí o usa el botón para buscarlo.
+                </p>
 
-              <label className="upload-btn">
-                Subir Manual de Instrucciones (PDF)
-                <input type="file" accept=".pdf" onChange={handleFileUpload} style={{ display: 'none' }} />
-              </label>
-            </div>
-          )}
-        </div>
-      )}
+                <label className="upload-btn">
+                  Subir Manual de Instrucciones (PDF)
+                  <input type="file" accept=".pdf" onChange={handleFileUpload} style={{ display: 'none' }} />
+                </label>
+              </div>
+            )}
+          </div>
+        )}
 
-      {data && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-          gap: 'var(--spacing-md)',
-          marginBottom: 'var(--spacing-lg)'
-        }}>
-          <RiskCard {...data.card1} />
-          <RiskCard {...data.card2} />
-          <RiskCard {...data.card3} />
-          <RiskCard {...data.card4} />
-          <RiskCard {...data.card5} />
-          <RiskCard {...data.card6} />
-        </div>
-      )}
-    </main>
+        {data && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+            gap: 'var(--spacing-md)',
+            marginBottom: 'var(--spacing-lg)'
+          }}>
+            <RiskCard {...data.card1} />
+            <RiskCard {...data.card2} />
+            <RiskCard {...data.card3} />
+            <RiskCard {...data.card4} />
+            <RiskCard {...data.card5} />
+            <RiskCard {...data.card6} />
+          </div>
+        )}
+      </main>
 
-    <Footer />
-  </div>
-);
+      <Footer />
+    </div>
+  );
 }
 
 export default App;
