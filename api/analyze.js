@@ -69,7 +69,12 @@ export default async function handler(request) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            return new Response(JSON.stringify({ error: errorData.error?.message || response.statusText }), {
+            // Safe debug: show first 4 chars to verify it's the right key
+            const keyDebug = apiKey ? `(Key starts with: ${apiKey.substring(0, 4)}...)` : '(No key loaded)';
+
+            return new Response(JSON.stringify({
+                error: `${errorData.error?.message || response.statusText} ${keyDebug}`
+            }), {
                 status: response.status,
                 headers: { 'Content-Type': 'application/json' }
             });
