@@ -95,18 +95,7 @@ function App() {
     if (!uploadedFile) return;
 
     // DEMO MODE CHECK (Filename based)
-    if (uploadedFile.name === 'manual_sierra.pdf') {
-      const confirmDemo = window.confirm("¿Quieres cargar el modo DEMO con 'manual_sierra.pdf'?");
-      if (confirmDemo) {
-        setAnalyzing(true);
-        setError(null);
-        setTimeout(() => {
-          setAnalyzing(false);
-          setData(MOCK_DATA);
-        }, 1000);
-        return;
-      }
-    }
+
 
     // REAL MODE ANALYSIS (Serverless)
     setAnalyzing(true);
