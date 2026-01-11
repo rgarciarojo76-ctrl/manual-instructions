@@ -1,5 +1,5 @@
 export const config = {
-    runtime: 'edge', // Use Edge runtime for faster cold starts
+    maxDuration: 60, // Increase timeout to 60 seconds (Node.js runtime) to avoid 504 errors on large PDFs
 };
 
 const SYSTEM_PROMPT = `
