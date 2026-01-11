@@ -38,7 +38,7 @@ export default async function handler(request) {
             });
         }
 
-        const apiKey = process.env.GEMINI_API_KEY;
+        const apiKey = process.env.GEMINI_API_KEY?.trim();
 
         if (!apiKey) {
             return new Response(JSON.stringify({ error: 'Server configuration error: Missing API Key' }), {
@@ -48,7 +48,7 @@ export default async function handler(request) {
         }
 
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
             {
                 method: "POST",
                 headers: {
