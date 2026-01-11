@@ -22,74 +22,34 @@ Reglas:
 `;
 
 export const analyzeWithGemini = async (apiKey, pdfText) => {
-    // Retry configuration
-    const MAX_RETRIES = 3;
-    let attempt = 0;
+    try {
+        console.log("Sending request to Serverless Security Proxy...");
 
-    while (attempt < MAX_RETRIES) {
-        try {
-            console.log(`Analyzing with Gemini via REST API (Attempt ${attempt + 1})...`);
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: SYSTEM_PROMPT + "\n\nAquí tienes el manual extraído:\n\n" + pdfText
-                            }]
-                        }],
-                        generationConfig: {
-                            responseMimeType: "application/json"
-                        }
-                    })
-                }
-            );
+        const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ pdfText })
+        });
 
-            if (!response.ok) {
-                // Handle rate limits (429) or server overload (503)
-                if (response.status === 429 || response.status === 503) {
-                    const errorData = await response.json().catch(() => ({}));
-                    console.warn(`Attempt ${attempt + 1} failed with ${response.status}: ${errorData.error?.message || response.statusText}`);
-
-                    attempt++;
-                    if (attempt < MAX_RETRIES) {
-                        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s, 8s...
-                        console.log(`Retrying in ${delay}ms...`);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        continue;
-                    }
-                }
-
-                // Other errors: fail immediately
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(`Gemini API Error ${response.status}: ${errorData.error?.message || response.statusText}`);
-            }
-
-            const data = await response.json();
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-            if (!text) throw new Error("No response text from Gemini.");
-
-            // Clean code blocks if present
-            const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-            return JSON.parse(cleanJson);
-
-        } catch (error) {
-            // If it's the last attempt, re-throw
-            if (attempt >= MAX_RETRIES - 1) {
-                console.error("Gemini Error:", error);
-                throw error;
-            }
-            // If it's a network error (fetch failed), also retry
-            console.warn(`Attempt ${attempt + 1} network error: ${error.message}`);
-            attempt++;
-            const delay = Math.pow(2, attempt) * 1000;
-            await new Promise(resolve => setTimeout(resolve, delay));
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Server Error ${response.status}: ${errorData.error || response.statusText}`);
         }
+
+        const data = await response.json();
+
+        // The server already extracts the text and cleans the JSON
+        // Checking structure just in case
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new Error("No response text from Gemini via Proxy.");
+
+        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanJson);
+
+    } catch (error) {
+        console.error("Proxy Error:", error);
+        throw error;
     }
 };
