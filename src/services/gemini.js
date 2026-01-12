@@ -40,12 +40,21 @@ export const analyzeWithGemini = async (apiKey, pdfText) => {
 
         const data = await response.json();
 
-        // The server already extracts the text and cleans the JSON
-        // Checking structure just in case
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) throw new Error("No response text from Gemini via Proxy.");
+        // Handle streaming response (Array of chunks)
+        let fullText = "";
+        if (Array.isArray(data)) {
+            data.forEach(chunk => {
+                const chunkText = chunk.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (chunkText) fullText += chunkText;
+            });
+        } else {
+            // Fallback for non-streaming (single object)
+            fullText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        }
 
-        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        if (!fullText) throw new Error("No response text from Gemini via Proxy.");
+
+        const cleanJson = fullText.replace(/```json/g, '').replace(/```/g, '').trim();
         return JSON.parse(cleanJson);
 
     } catch (error) {

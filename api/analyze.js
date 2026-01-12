@@ -1,5 +1,5 @@
 export const config = {
-    maxDuration: 60, // Increase timeout to 60 seconds (Node.js runtime) to avoid 504 errors on large PDFs
+    runtime: 'edge', // Edge runtime required for streaming to bypass Vercel timeouts
 };
 
 const SYSTEM_PROMPT = `
@@ -48,7 +48,7 @@ export default async function handler(request) {
         }
 
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${apiKey}`,
             {
                 method: "POST",
                 headers: {
@@ -69,7 +69,6 @@ export default async function handler(request) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            // Safe debug: show first 4 chars to verify it's the right key
             const keyDebug = apiKey ? `(Key starts with: ${apiKey.substring(0, 4)}...)` : '(No key loaded)';
 
             return new Response(JSON.stringify({
@@ -80,8 +79,8 @@ export default async function handler(request) {
             });
         }
 
-        const data = await response.json();
-        return new Response(JSON.stringify(data), {
+        // Pipe the stream directly to the client
+        return new Response(response.body, {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
