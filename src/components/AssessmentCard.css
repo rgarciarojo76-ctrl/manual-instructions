@@ -1,0 +1,136 @@
+.assessment-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    padding: 24px;
+    margin-bottom: 24px;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    height: 100%;
+    /* Adapting for Grid Layout */
+    display: flex;
+    flex-direction: column;
+}
+
+.assess-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #0099CC;
+    /* Azul ASPY */
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+
+.assess-title {
+    margin: 0;
+    color: #005580;
+    /* Azul oscuro */
+    font-size: 1.1rem;
+    /* Slightly smaller for density */
+    font-weight: 700;
+    flex: 1;
+    padding-right: 10px;
+}
+
+.assess-badge {
+    background-color: #f0f9ff;
+    color: #0284c7;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #bae6fd;
+    white-space: nowrap;
+}
+
+.assess-badge.critical {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+.assess-content-box {
+    background-color: #f8fdff;
+    /* Fondo muy suave */
+    border-left: 5px solid #0099CC;
+    /* Borde izquierdo marcado */
+    border-radius: 0 8px 8px 0;
+    padding: 20px;
+    flex: 1;
+    /* Expand to fill space */
+    display: flex;
+    flex-direction: column;
+}
+
+.assess-subtitle {
+    margin-top: 0;
+    color: #0c4a6e;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* La Magia: Grid Responsive */
+.assess-grid {
+    display: block;
+    /* Changed from Grid to Block for simple list items in this specific app, or kept as grid? User asked for Grid. */
+    /* Let's keep Grid if it makes sense, but for single column items in a possibly narrow card, block might be better. 
+     However, the user wants "CSS Grid". The user's code had `grid-template-columns: repeat(auto-fit, minmax(400px, 1fr))`. 
+     In a 3-column app layout, the cards might be small. 400px might break it. 
+     I will adjust minmax to 250px to fit in the card grid. */
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.assess-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #334155;
+    padding: 6px 0;
+    border-bottom: 1px dashed #e2e8f0;
+    /* Separador sutil */
+}
+
+.assess-item:last-child {
+    border-bottom: none;
+}
+
+.item-label {
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+}
+
+.assess-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.assess-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid #cbd5e1;
+    color: #64748b;
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.assess-btn:hover {
+    background: #f1f5f9;
+    color: #334155;
+}
