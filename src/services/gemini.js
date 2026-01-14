@@ -58,7 +58,8 @@ export const analyzeWithGemini = async (apiKey, pdfText) => {
         return JSON.parse(cleanJson);
 
     } catch (error) {
-        console.error("Proxy Error:", error);
+        // Generic error logging for production safety
+        console.error("Analysis Request Failed");
         throw error;
     }
 };
