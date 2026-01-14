@@ -1,0 +1,11 @@
+# Configuración de Seguridad y API (ASPY AI)
+
+# 1. Google Gemini API Key
+# Se utiliza en el servidor (api/analyze.js) para comunicar con la IA.
+# Debe ser una clave válida de Google AI Studio.
+GEMINI_API_KEY=AIzaSy...TuClaveAqui...
+
+# 2. Token de Seguridad (Gatekeeper)
+# Se utiliza en el cliente para validar que el acceso viene del Portal.
+# Debe coincidir con el valor configurado en el Portal Principal.
+VITE_SHARED_SECRET=ASPY-SECRET-HANDSHAKE-2026

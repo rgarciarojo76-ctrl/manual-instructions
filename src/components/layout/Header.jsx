@@ -1,6 +1,6 @@
 import React from 'react';
-import '../styles/global.css';
-import logo from '../assets/aspy_logo.png';
+import '../../styles/global.css';
+import logo from '../../assets/aspy_logo.png';
 
 const Header = () => {
     return (
