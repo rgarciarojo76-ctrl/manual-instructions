@@ -1,6 +1,6 @@
 import React from 'react';
 import '../../styles/global.css';
-import logo from '../../assets/aspy_logo.png';
+import logo from '../../assets/logo-direccion-tecnica.jpg';
 
 const Header = () => {
     return (
@@ -16,16 +16,16 @@ const Header = () => {
         }}>
             {/* Left Section: Logo and Title */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <img src={logo} alt="ASPY Logo" style={{ height: '40px', width: 'auto' }} />
+                <img src={logo} alt="Dirección Técnica Logo" style={{ height: '50px', width: 'auto' }} />
                 <div style={{ paddingLeft: '1rem', borderLeft: '1px solid var(--border-color)' }}>
                     <h1 translate="no" style={{
-                        fontSize: '1.15rem',
+                        fontSize: '1.2rem',
                         fontWeight: '700',
                         color: 'var(--accent-primary)',
                         lineHeight: 1.1,
                         marginBottom: '2px'
                     }}>
-                        ASPY AI LAB
+                        DIRECCIÓN TÉCNICA IA LAB
                     </h1>
                     <p style={{
                         fontSize: '0.75rem',
