@@ -151,12 +151,15 @@ export const generatePDF = async (data) => {
             // Height is determined by the longest content + header height (15mm approx) + padding
             const lineHeight = 5; // mm per line
             const contentHeight = Math.max(leftLines.length, rightLines.length) * lineHeight;
-            const rowHeight = contentHeight + 20; // +20 for header and padding
+            const rowHeight = contentHeight + 25; // +25 for header (12) + padding (13)
 
             // Check Page Break
-            if (currentY + rowHeight > pageHeight - 20) {
+            // Use strict atomic check: If perfectly fits, stay. If not, move.
+            // Page Height 297mm. Footer is at 287mm (approx).
+            // Let's leave a 15mm bottom margin safe zone.
+            if (currentY + rowHeight > pageHeight - 15) {
                 doc.addPage();
-                currentY = 20; // Reset Y on new page
+                currentY = 20; // Start new page with top margin
             }
 
             // 2. Draw Row Headers (Blue Box)
@@ -180,7 +183,7 @@ export const generatePDF = async (data) => {
                 doc.rect(margin + colWidth, currentY, colWidth, HeaderHeight, 'S');
 
                 doc.setTextColor(255, 255, 255);
-                doc.text(rightSec.title, margin + colWidth + (colWidth / 2), currentY + 5, { align: 'center', maxWidth: colWidth - 4 });
+                doc.text(rightSec.title, margin + colWidth + (colWidth / 2), currentY + 7, { align: 'center', maxWidth: colWidth - 4 }); // consistent Y +7
             }
 
             // 3. Draw Row Content (White Box)
@@ -193,18 +196,18 @@ export const generatePDF = async (data) => {
 
             // -- Left Content --
             doc.rect(margin, contentStartY, colWidth, contentBoxHeight, 'S'); // Border
-            let textY = contentStartY + 5;
+            let textY = contentStartY + 6; // Padding top 6
             leftLines.forEach(line => {
-                doc.text(line, margin + 2, textY);
+                doc.text(line, margin + 4, textY); // Padding left 4
                 textY += lineHeight;
             });
 
             // -- Right Content --
             if (rightSec) {
                 doc.rect(margin + colWidth, contentStartY, colWidth, contentBoxHeight, 'S');
-                textY = contentStartY + 5;
+                textY = contentStartY + 6;
                 rightLines.forEach(line => {
-                    doc.text(line, margin + colWidth + 2, textY);
+                    doc.text(line, margin + colWidth + 4, textY);
                     textY += lineHeight;
                 });
             }
