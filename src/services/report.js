@@ -15,7 +15,11 @@ export const generatePDF = async (data, customSections = null) => {
         const pageHeight = doc.internal.pageSize.height; // 297mm
         const margin = 15;
         const availableWidth = pageWidth - (margin * 2);
-        const colWidth = availableWidth / 2; // Split into 2 columns
+
+        // Dynamic Column Width: Full width if single section, else split
+        const isSingleSection = customSections && customSections.length === 1;
+        const colWidth = isSingleSection ? availableWidth : availableWidth / 2;
+
         const headerColor = [0, 159, 227]; // ASPY Corporate Blue (#009FE3)
         const borderColor = [0, 0, 0]; // Black
 
