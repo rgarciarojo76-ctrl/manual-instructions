@@ -93,14 +93,21 @@ export const generatePDF = async (data, customSections = null) => {
                 return cleaned;
             };
 
-            // 1. Priority: Look for "Modelo"
+            // 1. Priority: Look for "Equipo" or "Denominación" (Explicit user request)
+            const equipmentLine = sourceCard.content.find(line =>
+                line.toLowerCase().includes("equipo:") ||
+                line.toLowerCase().includes("denominación") ||
+                line.toLowerCase().includes("denominacion")
+            );
+
+            // 2. Priority: Look for "Modelo"
             const modelLine = sourceCard.content.find(line => line.toLowerCase().includes("modelo"));
 
-            // 2. Priority: Look for "Nombre" or "Equipo"
-            const nameLine = sourceCard.content.find(line => line.toLowerCase().includes("nombre") || line.toLowerCase().includes("equipo"));
+            // 3. Priority: Look for "Nombre"
+            const nameLine = sourceCard.content.find(line => line.toLowerCase().includes("nombre"));
 
-            // 3. Fallback: First line
-            const bestLine = modelLine || nameLine || sourceCard.content[0];
+            // 4. Fallback: First line
+            const bestLine = equipmentLine || modelLine || nameLine || sourceCard.content[0];
 
             if (bestLine) {
                 const extracted = extractValue(bestLine);
@@ -151,6 +158,33 @@ export const generatePDF = async (data, customSections = null) => {
         doc.setDrawColor(...borderColor);
         doc.setLineWidth(0.1);
 
+        // Helper to clean content lines (Remove Page Refs)
+        const cleanContentLine = (text) => {
+            return text
+                .replace(/\(Ref\..*?\)/gi, '')
+                .replace(/\(Pág\..*?\)/gi, '')
+                .trim();
+        };
+
+        // Helper to get wrapped lines and CLEAN them
+        const getLines = (section) => {
+            if (!section || !section.data || !section.data.content) return [];
+
+            // Flatten and clean content
+            const rawLines = section.data.content.map(line => cleanContentLine(line)); // Clean refs
+
+            // Wrap text
+            const wrapped = [];
+            rawLines.forEach(line => {
+                // Ensure we don't have empty lines after cleaning
+                if (line.replace(/•|-/, '').trim().length > 0) {
+                    const splitLines = doc.splitTextToSize(line, (colWidth - 8)); // -8 for padding
+                    splitLines.forEach(l => wrapped.push(l));
+                }
+            });
+            return wrapped;
+        };
+
         // Process in pairs (Row by Row)
         for (let i = 0; i < allSections.length; i += 2) {
             const leftSec = allSections[i];
@@ -160,92 +194,87 @@ export const generatePDF = async (data, customSections = null) => {
             doc.setFontSize(9);
             doc.setFont("helvetica", "normal");
 
-            // Helper to get text lines
-            const getLines = (sec) => {
-                if (!sec || !sec.data || !sec.data.content) return ["No especificado"];
-                if (sec.data.content.length === 0) return ["No especificado"];
+            let lines = [];
+            sec.data.content.forEach(item => {
+                const itemText = "• " + String(item);
+                // Wrap text within column padding (padding 2mm on each side)
+                const wrapped = doc.splitTextToSize(itemText, colWidth - 4);
+                lines.push(...wrapped);
+            });
+            return lines;
+        };
 
-                let lines = [];
-                sec.data.content.forEach(item => {
-                    const itemText = "• " + String(item);
-                    // Wrap text within column padding (padding 2mm on each side)
-                    const wrapped = doc.splitTextToSize(itemText, colWidth - 4);
-                    lines.push(...wrapped);
-                });
-                return lines;
-            };
+        const leftLines = getLines(leftSec);
+        const rightLines = rightSec ? getLines(rightSec) : [];
 
-            const leftLines = getLines(leftSec);
-            const rightLines = rightSec ? getLines(rightSec) : [];
+        // 1. Calculate Dimensions
+        const lineHeight = 5; // mm per line
+        const headerHeight = 12;
+        const topPadding = 6;
+        const bottomPadding = 2; // slight buffer
+        const baseRowOverhead = headerHeight + topPadding + bottomPadding;
 
-            // 1. Calculate Dimensions
-            const lineHeight = 5; // mm per line
-            const headerHeight = 12;
-            const topPadding = 6;
-            const bottomPadding = 2; // slight buffer
-            const baseRowOverhead = headerHeight + topPadding + bottomPadding;
+        const maxLines = Math.max(leftLines.length, rightLines.length);
+        const totalRowHeight = (maxLines * lineHeight) + baseRowOverhead;
 
-            const maxLines = Math.max(leftLines.length, rightLines.length);
-            const totalRowHeight = (maxLines * lineHeight) + baseRowOverhead;
+        // 2. Logic: Fit or Split
+        const pageEffectiveHeight = pageHeight - 15; // Bottom margin safe zone
+        const spaceLeft = pageEffectiveHeight - currentY;
 
-            // 2. Logic: Fit or Split
-            const pageEffectiveHeight = pageHeight - 15; // Bottom margin safe zone
-            const spaceLeft = pageEffectiveHeight - currentY;
+        // Definition of "Worth Splitting":
+        // We need enough space for Header + at least 3 lines of text to look good.
+        const minSplitHeight = headerHeight + topPadding + (3 * lineHeight);
 
-            // Definition of "Worth Splitting":
-            // We need enough space for Header + at least 3 lines of text to look good.
-            const minSplitHeight = headerHeight + topPadding + (3 * lineHeight);
+        if (totalRowHeight <= spaceLeft) {
+            // CASE A: FITS PERFECTLY
+            drawRowSegment(doc, currentY, leftLines, rightLines, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
+            currentY += totalRowHeight;
+        } else {
+            // IT DOES NOT FIT.
+            // Check if we should split or just jump.
+            if (spaceLeft > minSplitHeight) {
+                // CASE B: SPLIT (Fill gap, then jump)
+                console.log("Splitting section " + leftSec.title + " across pages.");
 
-            if (totalRowHeight <= spaceLeft) {
-                // CASE A: FITS PERFECTLY
+                // Calculate how many lines fit in the remaining space
+                // spaceLeft = header + topPadding + (lines * 5)
+                // lines = (spaceLeft - header - topPadding) / 5
+                const linesFit = Math.floor((spaceLeft - headerHeight - topPadding) / lineHeight);
+
+                // Slice content
+                const leftChunk1 = leftLines.slice(0, linesFit);
+                const leftChunk2 = leftLines.slice(linesFit);
+                const rightChunk1 = rightLines.slice(0, linesFit);
+                const rightChunk2 = rightLines.slice(linesFit);
+
+                // Draw Part 1
+                drawRowSegment(doc, currentY, leftChunk1, rightChunk1, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
+
+                // New Page
+                doc.addPage();
+                currentY = 20;
+
+                // Draw Part 2 (With REPEATED HEADERS)
+                // Note: We might need to handle if Part 2 is ALSO too big? 
+                // For simplicity, assuming Part 2 fits (it's rare to have >50 lines). 
+                // But to be safe, we just draw it. if it flows over, jsPDF might clip or we'd need recursion. 
+                // Given the constraint, we'll assume it fits or just flows to next page naturally (but we want headers).
+
+                drawRowSegment(doc, currentY, leftChunk2, rightChunk2, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
+
+                // Update Y
+                const part2Height = (Math.max(leftChunk2.length, rightChunk2.length) * lineHeight) + baseRowOverhead;
+                currentY += part2Height;
+
+            } else {
+                // CASE C: NOT ENOUGH SPACE TO SPLIT (Just Jump)
+                doc.addPage();
+                currentY = 20;
                 drawRowSegment(doc, currentY, leftLines, rightLines, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
                 currentY += totalRowHeight;
-            } else {
-                // IT DOES NOT FIT.
-                // Check if we should split or just jump.
-                if (spaceLeft > minSplitHeight) {
-                    // CASE B: SPLIT (Fill gap, then jump)
-                    console.log("Splitting section " + leftSec.title + " across pages.");
-
-                    // Calculate how many lines fit in the remaining space
-                    // spaceLeft = header + topPadding + (lines * 5)
-                    // lines = (spaceLeft - header - topPadding) / 5
-                    const linesFit = Math.floor((spaceLeft - headerHeight - topPadding) / lineHeight);
-
-                    // Slice content
-                    const leftChunk1 = leftLines.slice(0, linesFit);
-                    const leftChunk2 = leftLines.slice(linesFit);
-                    const rightChunk1 = rightLines.slice(0, linesFit);
-                    const rightChunk2 = rightLines.slice(linesFit);
-
-                    // Draw Part 1
-                    drawRowSegment(doc, currentY, leftChunk1, rightChunk1, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
-
-                    // New Page
-                    doc.addPage();
-                    currentY = 20;
-
-                    // Draw Part 2 (With REPEATED HEADERS)
-                    // Note: We might need to handle if Part 2 is ALSO too big? 
-                    // For simplicity, assuming Part 2 fits (it's rare to have >50 lines). 
-                    // But to be safe, we just draw it. if it flows over, jsPDF might clip or we'd need recursion. 
-                    // Given the constraint, we'll assume it fits or just flows to next page naturally (but we want headers).
-
-                    drawRowSegment(doc, currentY, leftChunk2, rightChunk2, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
-
-                    // Update Y
-                    const part2Height = (Math.max(leftChunk2.length, rightChunk2.length) * lineHeight) + baseRowOverhead;
-                    currentY += part2Height;
-
-                } else {
-                    // CASE C: NOT ENOUGH SPACE TO SPLIT (Just Jump)
-                    doc.addPage();
-                    currentY = 20;
-                    drawRowSegment(doc, currentY, leftLines, rightLines, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
-                    currentY += totalRowHeight;
-                }
             }
         }
+
 
         drawFooter();
         doc.save('Informe_Seguridad_Maquinaria.pdf');
