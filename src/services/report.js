@@ -148,72 +148,73 @@ export const generatePDF = async (data) => {
             const leftLines = getLines(leftSec);
             const rightLines = rightSec ? getLines(rightSec) : [];
 
-            // Height is determined by the longest content + header height (15mm approx) + padding
+            // 1. Calculate Dimensions
             const lineHeight = 5; // mm per line
-            const contentHeight = Math.max(leftLines.length, rightLines.length) * lineHeight;
-            const rowHeight = contentHeight + 25; // +25 for header (12) + padding (13)
+            const headerHeight = 12;
+            const topPadding = 6;
+            const bottomPadding = 2; // slight buffer
+            const baseRowOverhead = headerHeight + topPadding + bottomPadding;
 
-            // Check Page Break
-            // Use strict atomic check: If perfectly fits, stay. If not, move.
-            // Page Height 297mm. Footer is at 287mm (approx).
-            // Let's leave a 15mm bottom margin safe zone.
-            if (currentY + rowHeight > pageHeight - 15) {
-                doc.addPage();
-                currentY = 20; // Start new page with top margin
+            const maxLines = Math.max(leftLines.length, rightLines.length);
+            const totalRowHeight = (maxLines * lineHeight) + baseRowOverhead;
+
+            // 2. Logic: Fit or Split
+            const pageEffectiveHeight = pageHeight - 15; // Bottom margin safe zone
+            const spaceLeft = pageEffectiveHeight - currentY;
+
+            // Definition of "Worth Splitting":
+            // We need enough space for Header + at least 3 lines of text to look good.
+            const minSplitHeight = headerHeight + topPadding + (3 * lineHeight);
+
+            if (totalRowHeight <= spaceLeft) {
+                // CASE A: FITS PERFECTLY
+                drawRowSegment(doc, currentY, leftLines, rightLines, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
+                currentY += totalRowHeight;
+            } else {
+                // IT DOES NOT FIT.
+                // Check if we should split or just jump.
+                if (spaceLeft > minSplitHeight) {
+                    // CASE B: SPLIT (Fill gap, then jump)
+                    console.log(`Splitting section ${leftSec.title} across pages.`);
+
+                    // Calculate how many lines fit in the remaining space
+                    // spaceLeft = header + topPadding + (lines * 5)
+                    // lines = (spaceLeft - header - topPadding) / 5
+                    const linesFit = Math.floor((spaceLeft - headerHeight - topPadding) / lineHeight);
+
+                    // Slice content
+                    const leftChunk1 = leftLines.slice(0, linesFit);
+                    const leftChunk2 = leftLines.slice(linesFit);
+                    const rightChunk1 = rightLines.slice(0, linesFit);
+                    const rightChunk2 = rightLines.slice(linesFit);
+
+                    // Draw Part 1
+                    drawRowSegment(doc, currentY, leftChunk1, rightChunk1, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
+
+                    // New Page
+                    doc.addPage();
+                    currentY = 20;
+
+                    // Draw Part 2 (With REPEATED HEADERS)
+                    // Note: We might need to handle if Part 2 is ALSO too big? 
+                    // For simplicity, assuming Part 2 fits (it's rare to have >50 lines). 
+                    // But to be safe, we just draw it. if it flows over, jsPDF might clip or we'd need recursion. 
+                    // Given the constraint, we'll assume it fits or just flows to next page naturally (but we want headers).
+
+                    drawRowSegment(doc, currentY, leftChunk2, rightChunk2, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
+
+                    // Update Y
+                    const part2Height = (Math.max(leftChunk2.length, rightChunk2.length) * lineHeight) + baseRowOverhead;
+                    currentY += part2Height;
+
+                } else {
+                    // CASE C: NOT ENOUGH SPACE TO SPLIT (Just Jump)
+                    doc.addPage();
+                    currentY = 20;
+                    drawRowSegment(doc, currentY, leftLines, rightLines, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
+                    currentY += totalRowHeight;
+                }
             }
-
-            // 2. Draw Row Headers (Blue Box)
-            const HeaderHeight = 12;
-
-            // -- Left Header --
-            doc.setFillColor(...headerColor);
-            doc.rect(margin, currentY, colWidth, HeaderHeight, 'F'); // Fill
-            doc.rect(margin, currentY, colWidth, HeaderHeight, 'S'); // Border
-
-            doc.setTextColor(255, 255, 255); // White text
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(9);
-            // Center text in header
-            doc.text(leftSec.title, margin + (colWidth / 2), currentY + 7, { align: 'center', maxWidth: colWidth - 4 });
-
-            // -- Right Header --
-            if (rightSec) {
-                doc.setFillColor(...headerColor);
-                doc.rect(margin + colWidth, currentY, colWidth, HeaderHeight, 'F');
-                doc.rect(margin + colWidth, currentY, colWidth, HeaderHeight, 'S');
-
-                doc.setTextColor(255, 255, 255);
-                doc.text(rightSec.title, margin + colWidth + (colWidth / 2), currentY + 7, { align: 'center', maxWidth: colWidth - 4 }); // consistent Y +7
-            }
-
-            // 3. Draw Row Content (White Box)
-            const contentStartY = currentY + HeaderHeight;
-            const contentBoxHeight = rowHeight - HeaderHeight;
-
-            doc.setFillColor(255, 255, 255);
-            doc.setTextColor(0, 0, 0); // Black text
-            doc.setFont("helvetica", "normal");
-
-            // -- Left Content --
-            doc.rect(margin, contentStartY, colWidth, contentBoxHeight, 'S'); // Border
-            let textY = contentStartY + 6; // Padding top 6
-            leftLines.forEach(line => {
-                doc.text(line, margin + 4, textY); // Padding left 4
-                textY += lineHeight;
-            });
-
-            // -- Right Content --
-            if (rightSec) {
-                doc.rect(margin + colWidth, contentStartY, colWidth, contentBoxHeight, 'S');
-                textY = contentStartY + 6;
-                rightLines.forEach(line => {
-                    doc.text(line, margin + colWidth + 4, textY);
-                    textY += lineHeight;
-                });
-            }
-
-            // Move Y for next row
-            currentY += rowHeight;
         }
 
         drawFooter();
@@ -222,5 +223,54 @@ export const generatePDF = async (data) => {
     } catch (error) {
         console.error("PDF Generation Failed:", error);
         alert("Error al generar el PDF. Revisa la consola.");
+    }
+};
+
+// Helper function to draw a row (or segment of a row)
+const drawRowSegment = (doc, startY, lLines, rLines, lSec, rSec, color, colW, margin, headH, lineH) => {
+    // Height of this specific segment content
+    const segLines = Math.max(lLines.length, rLines.length);
+    const boxH = (segLines * lineH) + 8; // content box height (padding included)
+
+    // -- Headers --
+    doc.setFillColor(...color);
+
+    // Left Header
+    doc.rect(margin, startY, colW, headH, 'F');
+    doc.rect(margin, startY, colW, headH, 'S');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(lSec.title, margin + (colW / 2), startY + 7, { align: 'center', maxWidth: colW - 4 });
+
+    // Right Header
+    if (rSec) {
+        doc.rect(margin + colW, startY, colW, headH, 'F');
+        doc.rect(margin + colW, startY, colW, headH, 'S');
+        doc.text(rSec.title, margin + colW + (colW / 2), startY + 7, { align: 'center', maxWidth: colW - 4 });
+    }
+
+    // -- Content --
+    const contentY = startY + headH;
+    doc.setFillColor(255, 255, 255);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
+
+    // Left Box
+    doc.rect(margin, contentY, colW, boxH, 'S');
+    let textY = contentY + 6;
+    lLines.forEach(line => {
+        doc.text(line, margin + 4, textY);
+        textY += lineH;
+    });
+
+    // Right Box
+    if (rSec) {
+        doc.rect(margin + colW, contentY, colW, boxH, 'S');
+        textY = contentY + 6;
+        rLines.forEach(line => {
+            doc.text(line, margin + colW + 4, textY);
+            textY += lineH;
+        });
     }
 };
