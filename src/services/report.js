@@ -43,7 +43,12 @@ export const generatePDF = async (data, customSections = null) => {
                 doc.setPage(i);
                 doc.setFontSize(8);
                 doc.setTextColor(150);
+
+                // Centered Tagline
                 doc.text("Información Prevención de Riesgos Laborales - Apoyo Técnico IA", pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+                // Page Numbering "1-2" Bottom Right
+                doc.text(`${i}-${pageCount}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
             }
         };
 
@@ -62,39 +67,52 @@ export const generatePDF = async (data, customSections = null) => {
         doc.text("INFORMACIÓN PREVENCIÓN DE RIESGOS LABORALES", pageWidth - margin, 18, { align: 'right' });
 
         // Equipment Name Logic
-        let equipmentName = "EQUIPO DE TRABAJO";
-        // Use provided data OR try to extract from first custom section if it happens to be Identificacion
-        // For simplicity, if exporting single PDF, we might default to "EQUIPO DE TRABAJO"
-        // unless we pass the full data object too. Let's support passing both.
+        let equipmentName = "";
 
         const sourceCard = data ? data.card1 : (customSections && customSections.length > 0 ? customSections[0].data : null);
 
         if (sourceCard && sourceCard.content && sourceCard.content.length > 0) {
-            // Helper to clean up text (remove page refs, prefixes)
-            const cleanName = (text) => {
-                return text
+            // Helper to clean up text
+            const extractValue = (text) => {
+                // Remove (Ref. Pág. X)
+                let cleaned = text
                     .replace(/\(Ref\..*?\)/gi, '')
                     .replace(/\(Pág\..*?\)/gi, '')
-                    .replace(/^(Nombre|Modelo|Equipo|Máquina|Denominación|Tipo):\s*/i, '')
-                    .replace(/^\W+/, '')
                     .trim();
+
+                // Try to split by colon if present
+                if (cleaned.includes(":")) {
+                    const parts = cleaned.split(":");
+                    if (parts.length > 1) {
+                        cleaned = parts[1].trim();
+                    }
+                }
+
+                // If no colon, just ensure no bullets
+                cleaned = cleaned.replace(/^\W+/, '').trim();
+                return cleaned;
             };
 
-            // 1. Try to find a line that explicitly looks like a name
-            const explicitName = sourceCard.content.find(line =>
-                line.toLowerCase().includes("nombre") ||
-                line.toLowerCase().includes("modelo") ||
-                line.toLowerCase().includes("máquina")
-            );
+            // 1. Priority: Look for "Modelo"
+            const modelLine = sourceCard.content.find(line => line.toLowerCase().includes("modelo"));
 
-            // 2. Fallback to the very first line
-            const rawName = explicitName || sourceCard.content[0];
+            // 2. Priority: Look for "Nombre" or "Equipo"
+            const nameLine = sourceCard.content.find(line => line.toLowerCase().includes("nombre") || line.toLowerCase().includes("equipo"));
 
-            // 3. Clean and Validate
-            const cleaned = cleanName(rawName);
-            if (cleaned.length > 2 && cleaned.length < 60) {
-                equipmentName = cleaned.toUpperCase();
+            // 3. Fallback: First line
+            const bestLine = modelLine || nameLine || sourceCard.content[0];
+
+            if (bestLine) {
+                const extracted = extractValue(bestLine);
+                if (extracted.length > 0) {
+                    equipmentName = extracted.toUpperCase();
+                }
             }
+        }
+
+        // If extraction failed, fallback to generic ONLY if absolutely necessary, but user wants mandatory name.
+        if (!equipmentName || equipmentName.length < 2) {
+            equipmentName = "EQUIPO DE TRABAJO";
         }
 
         doc.setTextColor(100); // Grey for subtitle
