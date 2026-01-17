@@ -66,7 +66,9 @@ Si el fabricante NO menciona un punto, el contenido debe ser un array con un ún
 
 REGLAS DE ORO:
 1. CITAS: Cada frase DEBE acabar con la referencia entre paréntesis: "(Ref. Pág. X)".
-2. LITERALIDAD: Usa "Según el fabricante...", "El manual indica...". No uses tu opinión.
+2. ESTILO DIRECTO: NO uses frases como "El manual indica...", "Según el fabricante...", "Se menciona...". Ve al grano.
+   - MAL: "El fabricante indica que se deben usar guantes."
+   - BIEN: "Uso obligatorio de guantes de protección mecánica."
 3. VACÍO: Si no hay datos, usa ["No especificado por el fabricante"]. No dejes arrays vacíos [].
 4. ICONOS: Usa códigos ISO 7010.
 `;
