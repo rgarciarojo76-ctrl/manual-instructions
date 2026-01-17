@@ -11,6 +11,17 @@ export default defineConfig({
   },
   server: {
     port: 5174,
-    strictPort: true, // Fail if port is busy rather than switching
+    strictPort: true,
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          pdf: ['jspdf', 'jspdf-autotable', 'html2canvas'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000, // Increase limit slightly as PDF libs are naturally large
   }
 })

@@ -258,10 +258,7 @@ export const generatePDF = async (data, customSections = null) => {
                     currentY = 20;
 
                     // Draw Part 2 (With REPEATED HEADERS)
-                    // Note: We might need to handle if Part 2 is ALSO too big?
-                    // For simplicity, assuming Part 2 fits (it's rare to have >50 lines).
-                    // But to be safe, we just draw it. if it flows over, jsPDF might clip or we'd need recursion.
-                    // Given the constraint, we'll assume it fits or just flows to next page naturally (but we want headers).
+
 
                     drawRowSegment(doc, currentY, leftChunk2, rightChunk2, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
 
