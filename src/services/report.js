@@ -100,14 +100,21 @@ export const generatePDF = async (data, customSections = null) => {
                 line.toLowerCase().includes("denominacion")
             );
 
-            // 2. Priority: Look for "Modelo"
-            const modelLine = sourceCard.content.find(line => line.toLowerCase().includes("modelo"));
+            // 2. Fallback: Use the FIRST line, BUT only if it DOES NOT look like a spec (Modelo, Peso, etc.)
+            let inferredLine = null;
+            if (sourceCard.content.length > 0) {
+                const first = sourceCard.content[0].toLowerCase();
+                // List of keywords to AVOID treating as a name
+                const technicalKeys = ["modelo", "ref.", "peso", "dimensiones", "ancho", "largo", "alto", "tensión", "potencia"];
+                const isTechnical = technicalKeys.some(key => first.includes(key));
 
-            // 3. Priority: Look for "Nombre"
-            const nameLine = sourceCard.content.find(line => line.toLowerCase().includes("nombre"));
+                if (!isTechnical) {
+                    inferredLine = sourceCard.content[0];
+                }
+            }
 
-            // 4. Fallback: First line
-            const bestLine = equipmentLine || modelLine || nameLine || sourceCard.content[0];
+            // 3. Last Result: Use anything found or first line
+            const bestLine = equipmentLine || inferredLine || sourceCard.content[0];
 
             if (bestLine) {
                 const extracted = extractValue(bestLine);
@@ -247,9 +254,9 @@ export const generatePDF = async (data, customSections = null) => {
                     currentY = 20;
 
                     // Draw Part 2 (With REPEATED HEADERS)
-                    // Note: We might need to handle if Part 2 is ALSO too big? 
-                    // For simplicity, assuming Part 2 fits (it's rare to have >50 lines). 
-                    // But to be safe, we just draw it. if it flows over, jsPDF might clip or we'd need recursion. 
+                    // Note: We might need to handle if Part 2 is ALSO too big?
+                    // For simplicity, assuming Part 2 fits (it's rare to have >50 lines).
+                    // But to be safe, we just draw it. if it flows over, jsPDF might clip or we'd need recursion.
                     // Given the constraint, we'll assume it fits or just flows to next page naturally (but we want headers).
 
                     drawRowSegment(doc, currentY, leftChunk2, rightChunk2, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
@@ -286,22 +293,45 @@ const drawRowSegment = (doc, startY, lLines, rLines, lSec, rSec, color, colW, ma
     // -- Headers --
     doc.setFillColor(...color);
 
+    // Calculate Header Text Y to Center it Vertically
+    const getCenteredY = (text, boxY, boxHeight) => {
+        const lines = doc.splitTextToSize(text, colW - 4);
+        // Better: use line count * fontSize approx.
+        // Standard baseline is tricky.
+        // Let's assume font size 9. Line height is approx 3.5mm?
+        // Visually centering:
+        // Box Middle: boxY + (boxHeight / 2)
+        // Text Start Y: Middle - (TotalTextHeight / 2) + FirstLineAscent
+
+        // Simple approach:
+        // If 1 line: startY + 7 (approx middle of 12) matched well.
+        // If 2 lines: startY + 5?
+
+        if (lines.length > 1) {
+            return boxY + 5; // Shift up slightly for multiline
+        }
+        return boxY + 7; // Default for single line
+    };
+
     // Left Header
     doc.rect(margin, startY, colW, headH, 'F');
     doc.rect(margin, startY, colW, headH, 'S');
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.text(lSec.title, margin + (colW / 2), startY + 7, { align: 'center', maxWidth: colW - 4 });
+
+    let headerY = getCenteredY(lSec.title, startY, headH);
+    doc.text(lSec.title, margin + (colW / 2), headerY, { align: 'center', maxWidth: colW - 4 });
 
     // Right Header
     if (rSec) {
-        doc.setFillColor(...color); // Re-apply Blue Fill
+        doc.setFillColor(...color);
         doc.rect(margin + colW, startY, colW, headH, 'F');
         doc.rect(margin + colW, startY, colW, headH, 'S');
 
-        doc.setTextColor(255, 255, 255); // Re-apply White Text
-        doc.text(rSec.title, margin + colW + (colW / 2), startY + 7, { align: 'center', maxWidth: colW - 4 });
+        doc.setTextColor(255, 255, 255);
+        headerY = getCenteredY(rSec.title, startY, headH);
+        doc.text(rSec.title, margin + colW + (colW / 2), headerY, { align: 'center', maxWidth: colW - 4 });
     }
 
     // -- Content --
