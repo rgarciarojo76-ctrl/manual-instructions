@@ -2,6 +2,7 @@ import { useState } from 'react';
 import RiskCard from './RiskCard';
 import { extractTextFromPDF } from '../services/pdf';
 import { analyzeWithGemini } from '../services/gemini';
+import { generateSinglePDF } from '../services/report'; // Import new service
 
 // Mock Data for Demo Mode
 const MOCK_DATA = {
@@ -197,14 +198,14 @@ export default function MainContent({ data, analyzing, error, onFileUpload }) {
                             }
                         }
                     `}</style>
-                    <RiskCard {...data.card1} />
-                    <RiskCard {...data.card2} />
-                    <RiskCard {...data.card3} />
-                    <RiskCard {...data.card4} />
-                    <RiskCard {...data.card5} />
-                    <RiskCard {...data.card6} />
-                    <RiskCard {...data.card7} />
-                    <RiskCard {...data.card8} />
+                    <RiskCard {...data.card1} onExportPdf={(card) => generateSinglePDF(card, data.card1.title)} />
+                    <RiskCard {...data.card2} onExportPdf={(card) => generateSinglePDF(card, data.card2.title)} />
+                    <RiskCard {...data.card3} onExportPdf={(card) => generateSinglePDF(card, data.card3.title)} />
+                    <RiskCard {...data.card4} onExportPdf={(card) => generateSinglePDF(card, data.card4.title)} />
+                    <RiskCard {...data.card5} onExportPdf={(card) => generateSinglePDF(card, data.card5.title)} />
+                    <RiskCard {...data.card6} onExportPdf={(card) => generateSinglePDF(card, data.card6.title)} />
+                    <RiskCard {...data.card7} onExportPdf={(card) => generateSinglePDF(card, data.card7.title)} />
+                    <RiskCard {...data.card8} onExportPdf={(card) => generateSinglePDF(card, data.card8.title)} />
                 </div>
             )}
         </main>

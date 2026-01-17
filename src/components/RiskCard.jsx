@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from './Icon';
 import './AssessmentCard.css'; // New styles
 
-const RiskCard = ({ title, content, icons = [], isCritical = false }) => {
+const RiskCard = ({ title, content, icons = [], isCritical = false, onExportPdf }) => {
 
     const handleCopy = () => {
         const text = `${title}\n\n${content.map(c => `- ${c}`).join('\n')}`;
@@ -11,7 +11,11 @@ const RiskCard = ({ title, content, icons = [], isCritical = false }) => {
     };
 
     const handlePdf = () => {
-        alert('Generación de PDF individual: Función simulada.');
+        if (onExportPdf) {
+            onExportPdf({ title, content, icons, isCritical });
+        } else {
+            alert('Función de PDF no conectada.');
+        }
     };
 
     return (

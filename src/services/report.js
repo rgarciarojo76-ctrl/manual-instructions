@@ -1,12 +1,13 @@
+
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import logoUrl from '../assets/logo-direccion-tecnica.jpg'; // Vite returns the URL
 
-export const generatePDF = async (data) => {
-    if (!data) return;
+export const generatePDF = async (data, customSections = null) => {
+    if (!data && !customSections) return;
 
     try {
-        console.log("Starting PDF generation (New Design)...");
+        console.log("Starting PDF generation...");
         const doc = new jsPDF();
 
         // --- Config & Styles ---
@@ -60,29 +61,34 @@ export const generatePDF = async (data) => {
         doc.setFont("helvetica", "bold");
         doc.text("INFORMACIÓN PREVENCIÓN DE RIESGOS LABORALES", pageWidth - margin, 18, { align: 'right' });
 
-        // Equipment Name (Dynamic Extraction)
+        // Equipment Name Logic
         let equipmentName = "EQUIPO DE TRABAJO";
+        // Use provided data OR try to extract from first custom section if it happens to be Identificacion
+        // For simplicity, if exporting single PDF, we might default to "EQUIPO DE TRABAJO"
+        // unless we pass the full data object too. Let's support passing both.
 
-        if (data.card1 && data.card1.content && data.card1.content.length > 0) {
+        const sourceCard = data ? data.card1 : (customSections && customSections.length > 0 ? customSections[0].data : null);
+
+        if (sourceCard && sourceCard.content && sourceCard.content.length > 0) {
             // Helper to clean up text (remove page refs, prefixes)
             const cleanName = (text) => {
                 return text
-                    .replace(/\(Ref\..*?\)/gi, '') // Remove (Ref. Pág. X)
+                    .replace(/\(Ref\..*?\)/gi, '')
                     .replace(/\(Pág\..*?\)/gi, '')
-                    .replace(/^(Nombre|Modelo|Equipo|Máquina|Denominación|Tipo):\s*/i, '') // Remove common prefixes
-                    .replace(/^\W+/, '') // Remove leading non-word chars (bullets)
+                    .replace(/^(Nombre|Modelo|Equipo|Máquina|Denominación|Tipo):\s*/i, '')
+                    .replace(/^\W+/, '')
                     .trim();
             };
 
             // 1. Try to find a line that explicitly looks like a name
-            const explicitName = data.card1.content.find(line =>
+            const explicitName = sourceCard.content.find(line =>
                 line.toLowerCase().includes("nombre") ||
                 line.toLowerCase().includes("modelo") ||
                 line.toLowerCase().includes("máquina")
             );
 
-            // 2. Fallback to the very first line (usually the name in this prompt structure)
-            const rawName = explicitName || data.card1.content[0];
+            // 2. Fallback to the very first line
+            const rawName = explicitName || sourceCard.content[0];
 
             // 3. Clean and Validate
             const cleaned = cleanName(rawName);
@@ -103,20 +109,26 @@ export const generatePDF = async (data) => {
         doc.line(pageWidth - margin - 5, 25, pageWidth - margin, 25);
 
 
-        // --- Grid Content (8 Points -> 4 Rows) ---
+        // --- Grid Content ---
         let currentY = 40; // Start Y for table
 
-        // Define the 8 sections
-        const allSections = [
-            { title: "IDENTIFICACIÓN DEL EQUIPO", data: data.card1 },
-            { title: "USO PREVISTO Y LIMITACIONES DE USO\nESTABLECIDAS POR EL FABRICANTE", data: data.card2 },
-            { title: "RIESGOS RECONOCIDOS", data: data.card3 },
-            { title: "MEDIDAS DE PROTECCIÓN Y SEGURIDAD", data: data.card4 },
-            { title: "EQUIPOS DE PROTECCIÓN INDIVIDUAL (EPIs)", data: data.card5 },
-            { title: "MANTENIMIENTO, LIMPIEZA Y AJUSTE", data: data.card6 },
-            { title: "FORMACIÓN Y CUALIFICACIÓN", data: data.card7 },
-            { title: "ACTUACIONES EN EMERGENCIAS", data: data.card8 },
-        ];
+        // Determine Sections source
+        let allSections = [];
+        if (customSections) {
+            allSections = customSections;
+        } else {
+            // Define the 8 sections
+            allSections = [
+                { title: "IDENTIFICACIÓN DEL EQUIPO", data: data.card1 },
+                { title: "USO PREVISTO Y LIMITACIONES DE USO\nESTABLECIDAS POR EL FABRICANTE", data: data.card2 },
+                { title: "RIESGOS RECONOCIDOS", data: data.card3 },
+                { title: "MEDIDAS DE PROTECCIÓN Y SEGURIDAD", data: data.card4 },
+                { title: "EQUIPOS DE PROTECCIÓN INDIVIDUAL (EPIs)", data: data.card5 },
+                { title: "MANTENIMIENTO, LIMPIEZA Y AJUSTE", data: data.card6 },
+                { title: "FORMACIÓN Y CUALIFICACIÓN", data: data.card7 },
+                { title: "ACTUACIONES EN EMERGENCIAS", data: data.card8 },
+            ];
+        }
 
         doc.setDrawColor(...borderColor);
         doc.setLineWidth(0.1);
@@ -175,7 +187,7 @@ export const generatePDF = async (data) => {
                 // Check if we should split or just jump.
                 if (spaceLeft > minSplitHeight) {
                     // CASE B: SPLIT (Fill gap, then jump)
-                    console.log(`Splitting section ${leftSec.title} across pages.`);
+                    console.log("Splitting section " + leftSec.title + " across pages.");
 
                     // Calculate how many lines fit in the remaining space
                     // spaceLeft = header + topPadding + (lines * 5)
@@ -273,4 +285,24 @@ const drawRowSegment = (doc, startY, lLines, rLines, lSec, rSec, color, colW, ma
             textY += lineH;
         });
     }
+};
+
+export const generateSinglePDF = (cardData, cardTitle) => {
+    // Wrap single card data into a structure that generatePDF understands,
+    // essentially creating a report with just one section.
+    // However, generatePDF expects a full 'data' object with card1..card8 keys.
+    // To enable "Specific Section" export, we can modify generatePDF to accept an optional 'sectionsFilter' arg,
+    // or just construct a fake full object where only relevant card is populated. 
+    // BUT generatePDF layout is hardcoded for 8 sections. 
+    // Better strategy: Create a simplified version of the layout for single card.
+    // ACTUALLY, user wants "SAME FORMAT". So we should reuse the same logic.
+    // Let's create a special data object where we pass the single card as 'card1' (Identificacion) 
+    // or map it to a generic list. But the titles are hardcoded in generatePDF.
+
+    // REFACTOR STRATEGY: 
+    // 1. Refactor slightly generatePDF to accept a 'customSections' array.
+    // 2. If present, use that instead of the hardcoded 8.
+
+    const singleSection = [{ title: cardTitle.toUpperCase(), data: cardData }];
+    generatePDF(null, singleSection);
 };
