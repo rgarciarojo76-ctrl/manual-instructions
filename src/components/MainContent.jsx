@@ -69,46 +69,11 @@ const MOCK_DATA = {
     }
 };
 
-export default function MainContent() {
-    const [analyzing, setAnalyzing] = useState(false);
-    const [data, setData] = useState(null);
-    const [error, setError] = useState(null);
+export default function MainContent({ data, analyzing, error, onFileUpload }) {
     const [isDragging, setIsDragging] = useState(false);
 
-    const processFile = async (uploadedFile) => {
-        if (!uploadedFile) return;
-
-        // REAL MODE ANALYSIS (Serverless)
-        setAnalyzing(true);
-        setError(null);
-        setData(null);
-
-        try {
-            // 1. Extract Text
-            console.log("Extracting text...");
-            const { fullText } = await extractTextFromPDF(uploadedFile);
-
-            if (!fullText || fullText.length < 50) {
-                throw new Error("No se pudo extraer texto suficiente del PDF. Asegúrate de que no sea una imagen escaneada.");
-            }
-
-            // 2. Analyze with Gemini (Proxy)
-            console.log("Analyzing with Gemini via Proxy...");
-            const result = await analyzeWithGemini(null, fullText); // Pass null as key is on server
-            setData(result);
-
-        } catch (err) {
-            console.error(err);
-            setError(err.message || "Error durante el análisis.");
-            setData(null);
-        } finally {
-            setAnalyzing(false);
-        }
-    };
-
-
-    const handleFileUpload = async (e) => {
-        processFile(e.target.files[0]);
+    const handleFileUpload = (e) => {
+        onFileUpload(e.target.files[0]);
     };
 
     const handleDragOver = (e) => {
@@ -125,7 +90,7 @@ export default function MainContent() {
         e.preventDefault();
         setIsDragging(false);
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            processFile(e.dataTransfer.files[0]);
+            onFileUpload(e.dataTransfer.files[0]);
         }
     };
 

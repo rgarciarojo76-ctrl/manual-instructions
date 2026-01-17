@@ -2,7 +2,9 @@ import React from 'react';
 import '../../styles/global.css';
 import logo from '../../assets/logo-direccion-tecnica.jpg';
 
-const Header = () => {
+import { generatePDF } from '../../services/report';
+
+const Header = ({ data }) => {
     return (
         <header style={{
             marginBottom: 'var(--spacing-md)',
@@ -62,30 +64,32 @@ const Header = () => {
             </div>
 
             {/* Right Section: Export PDF Button */}
-            <button style={{
-                padding: '8px 16px',
-                backgroundColor: 'white',
-                border: '1px solid var(--border-color)',
-                borderRadius: '6px',
-                color: 'var(--accent-primary)',
-                fontSize: '0.85rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
-                transition: 'all 0.2s'
-            }}
-                onMouseEnter={(e) => {
-                    e.target.style.background = '#f8fafc';
-                    e.target.style.borderColor = 'var(--accent-primary)';
+            {data && (
+                <button style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'white',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                    color: 'var(--accent-primary)',
+                    fontSize: '0.85rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
+                    transition: 'all 0.2s'
                 }}
-                onMouseLeave={(e) => {
-                    e.target.style.background = 'white';
-                    e.target.style.borderColor = 'var(--border-color)';
-                }}
-                onClick={() => alert('Generando informe PDF completo...')}
-            >
-                Exportar PDF
-            </button>
+                    onMouseEnter={(e) => {
+                        e.target.style.background = '#f8fafc';
+                        e.target.style.borderColor = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.target.style.background = 'white';
+                        e.target.style.borderColor = 'var(--border-color)';
+                    }}
+                    onClick={() => generatePDF(data)}
+                >
+                    ⬇️ Exportar PDF
+                </button>
+            )}
         </header>
     );
 };
