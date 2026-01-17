@@ -220,16 +220,26 @@ export default function MainContent() {
             {data && (
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', // Slightly smaller min-width for 4 column fit
                     gap: 'var(--spacing-md)',
                     marginBottom: 'var(--spacing-lg)'
                 }}>
+                    {/* Inline style override for desktop to force 4 columns if space allows */}
+                    <style>{`
+                        @media (min-width: 1200px) {
+                            div[style*="display: grid"] {
+                                grid-template-columns: repeat(4, 1fr) !important;
+                            }
+                        }
+                    `}</style>
                     <RiskCard {...data.card1} />
                     <RiskCard {...data.card2} />
                     <RiskCard {...data.card3} />
                     <RiskCard {...data.card4} />
                     <RiskCard {...data.card5} />
                     <RiskCard {...data.card6} />
+                    <RiskCard {...data.card7} />
+                    <RiskCard {...data.card8} />
                 </div>
             )}
         </main>
