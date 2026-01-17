@@ -275,8 +275,11 @@ const drawRowSegment = (doc, startY, lLines, rLines, lSec, rSec, color, colW, ma
 
     // Right Header
     if (rSec) {
+        doc.setFillColor(...color); // Re-apply Blue Fill
         doc.rect(margin + colW, startY, colW, headH, 'F');
         doc.rect(margin + colW, startY, colW, headH, 'S');
+
+        doc.setTextColor(255, 255, 255); // Re-apply White Text
         doc.text(rSec.title, margin + colW + (colW / 2), startY + 7, { align: 'center', maxWidth: colW - 4 });
     }
 
