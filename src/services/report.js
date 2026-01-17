@@ -194,87 +194,79 @@ export const generatePDF = async (data, customSections = null) => {
             doc.setFontSize(9);
             doc.setFont("helvetica", "normal");
 
-            let lines = [];
-            sec.data.content.forEach(item => {
-                const itemText = "• " + String(item);
-                // Wrap text within column padding (padding 2mm on each side)
-                const wrapped = doc.splitTextToSize(itemText, colWidth - 4);
-                lines.push(...wrapped);
-            });
-            return lines;
-        };
 
-        const leftLines = getLines(leftSec);
-        const rightLines = rightSec ? getLines(rightSec) : [];
 
-        // 1. Calculate Dimensions
-        const lineHeight = 5; // mm per line
-        const headerHeight = 12;
-        const topPadding = 6;
-        const bottomPadding = 2; // slight buffer
-        const baseRowOverhead = headerHeight + topPadding + bottomPadding;
+            const leftLines = getLines(leftSec);
+            const rightLines = rightSec ? getLines(rightSec) : [];
 
-        const maxLines = Math.max(leftLines.length, rightLines.length);
-        const totalRowHeight = (maxLines * lineHeight) + baseRowOverhead;
+            // 1. Calculate Dimensions
+            const lineHeight = 5; // mm per line
+            const headerHeight = 12;
+            const topPadding = 6;
+            const bottomPadding = 2; // slight buffer
+            const baseRowOverhead = headerHeight + topPadding + bottomPadding;
 
-        // 2. Logic: Fit or Split
-        const pageEffectiveHeight = pageHeight - 15; // Bottom margin safe zone
-        const spaceLeft = pageEffectiveHeight - currentY;
+            const maxLines = Math.max(leftLines.length, rightLines.length);
+            const totalRowHeight = (maxLines * lineHeight) + baseRowOverhead;
 
-        // Definition of "Worth Splitting":
-        // We need enough space for Header + at least 3 lines of text to look good.
-        const minSplitHeight = headerHeight + topPadding + (3 * lineHeight);
+            // 2. Logic: Fit or Split
+            const pageEffectiveHeight = pageHeight - 15; // Bottom margin safe zone
+            const spaceLeft = pageEffectiveHeight - currentY;
 
-        if (totalRowHeight <= spaceLeft) {
-            // CASE A: FITS PERFECTLY
-            drawRowSegment(doc, currentY, leftLines, rightLines, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
-            currentY += totalRowHeight;
-        } else {
-            // IT DOES NOT FIT.
-            // Check if we should split or just jump.
-            if (spaceLeft > minSplitHeight) {
-                // CASE B: SPLIT (Fill gap, then jump)
-                console.log("Splitting section " + leftSec.title + " across pages.");
+            // Definition of "Worth Splitting":
+            // We need enough space for Header + at least 3 lines of text to look good.
+            const minSplitHeight = headerHeight + topPadding + (3 * lineHeight);
 
-                // Calculate how many lines fit in the remaining space
-                // spaceLeft = header + topPadding + (lines * 5)
-                // lines = (spaceLeft - header - topPadding) / 5
-                const linesFit = Math.floor((spaceLeft - headerHeight - topPadding) / lineHeight);
-
-                // Slice content
-                const leftChunk1 = leftLines.slice(0, linesFit);
-                const leftChunk2 = leftLines.slice(linesFit);
-                const rightChunk1 = rightLines.slice(0, linesFit);
-                const rightChunk2 = rightLines.slice(linesFit);
-
-                // Draw Part 1
-                drawRowSegment(doc, currentY, leftChunk1, rightChunk1, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
-
-                // New Page
-                doc.addPage();
-                currentY = 20;
-
-                // Draw Part 2 (With REPEATED HEADERS)
-                // Note: We might need to handle if Part 2 is ALSO too big? 
-                // For simplicity, assuming Part 2 fits (it's rare to have >50 lines). 
-                // But to be safe, we just draw it. if it flows over, jsPDF might clip or we'd need recursion. 
-                // Given the constraint, we'll assume it fits or just flows to next page naturally (but we want headers).
-
-                drawRowSegment(doc, currentY, leftChunk2, rightChunk2, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
-
-                // Update Y
-                const part2Height = (Math.max(leftChunk2.length, rightChunk2.length) * lineHeight) + baseRowOverhead;
-                currentY += part2Height;
-
-            } else {
-                // CASE C: NOT ENOUGH SPACE TO SPLIT (Just Jump)
-                doc.addPage();
-                currentY = 20;
+            if (totalRowHeight <= spaceLeft) {
+                // CASE A: FITS PERFECTLY
                 drawRowSegment(doc, currentY, leftLines, rightLines, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
                 currentY += totalRowHeight;
+            } else {
+                // IT DOES NOT FIT.
+                // Check if we should split or just jump.
+                if (spaceLeft > minSplitHeight) {
+                    // CASE B: SPLIT (Fill gap, then jump)
+                    console.log("Splitting section " + leftSec.title + " across pages.");
+
+                    // Calculate how many lines fit in the remaining space
+                    // spaceLeft = header + topPadding + (lines * 5)
+                    // lines = (spaceLeft - header - topPadding) / 5
+                    const linesFit = Math.floor((spaceLeft - headerHeight - topPadding) / lineHeight);
+
+                    // Slice content
+                    const leftChunk1 = leftLines.slice(0, linesFit);
+                    const leftChunk2 = leftLines.slice(linesFit);
+                    const rightChunk1 = rightLines.slice(0, linesFit);
+                    const rightChunk2 = rightLines.slice(linesFit);
+
+                    // Draw Part 1
+                    drawRowSegment(doc, currentY, leftChunk1, rightChunk1, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
+
+                    // New Page
+                    doc.addPage();
+                    currentY = 20;
+
+                    // Draw Part 2 (With REPEATED HEADERS)
+                    // Note: We might need to handle if Part 2 is ALSO too big? 
+                    // For simplicity, assuming Part 2 fits (it's rare to have >50 lines). 
+                    // But to be safe, we just draw it. if it flows over, jsPDF might clip or we'd need recursion. 
+                    // Given the constraint, we'll assume it fits or just flows to next page naturally (but we want headers).
+
+                    drawRowSegment(doc, currentY, leftChunk2, rightChunk2, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
+
+                    // Update Y
+                    const part2Height = (Math.max(leftChunk2.length, rightChunk2.length) * lineHeight) + baseRowOverhead;
+                    currentY += part2Height;
+
+                } else {
+                    // CASE C: NOT ENOUGH SPACE TO SPLIT (Just Jump)
+                    doc.addPage();
+                    currentY = 20;
+                    drawRowSegment(doc, currentY, leftLines, rightLines, leftSec, rightSec, headerColor, colWidth, margin, headerHeight, lineHeight);
+                    currentY += totalRowHeight;
+                }
             }
         }
-
 
         drawFooter();
         doc.save('Informe_Seguridad_Maquinaria.pdf');
