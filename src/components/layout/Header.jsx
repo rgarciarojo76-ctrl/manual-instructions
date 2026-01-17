@@ -6,85 +6,34 @@ import { generatePDF } from '../../services/report';
 
 const Header = ({ data }) => {
     return (
-        <header style={{
-            marginBottom: 'var(--spacing-md)',
-            borderBottom: '1px solid var(--border-color)',
-            padding: '12px 24px',
-            background: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)'
-        }}>
+        <header className="header-main">
             {/* Left Section: Logo and Title */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <img src={logo} alt="Dirección Técnica Logo" style={{ height: '50px', width: 'auto' }} />
-                <div style={{ paddingLeft: '1rem', borderLeft: '1px solid var(--border-color)' }}>
-                    <h1 translate="no" style={{
-                        fontSize: '1.2rem',
-                        fontWeight: '700',
-                        color: 'var(--accent-primary)',
-                        lineHeight: 1.1,
-                        marginBottom: '2px'
-                    }}>
+            <div className="header-left">
+                <img src={logo} alt="Dirección Técnica Logo" className="header-logo" />
+                <div className="header-branding">
+                    <h1 translate="no" className="header-title-text">
                         DIRECCIÓN TÉCNICA IA LAB
                     </h1>
-                    <p style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--text-secondary)',
-                        fontWeight: '400'
-                    }}>
+                    <p className="header-subtitle">
                         App: Análisis de Manuales – Riesgos PRL
                     </p>
                 </div>
             </div>
 
             {/* Center-Right Section: Status and Note */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                <div style={{
-                    backgroundColor: '#eff6ff',
-                    color: 'var(--accent-primary)',
-                    border: '1px solid #bfdbfe',
-                    padding: '3px 12px',
-                    borderRadius: '999px',
-                    fontSize: '0.7rem',
-                    fontWeight: '600',
-                }}>
+            <div className="header-center">
+                <div className="header-status-badge">
                     Estado: Piloto interno
                 </div>
-                <div style={{
-                    color: '#d97706', // safety-yellow / amber
-                    fontSize: '0.65rem',
-                    fontWeight: '500',
-                    textAlign: 'center',
-                    maxWidth: '400px'
-                }}>
+                <div className="header-warning">
                     AVISO: Apoyo técnico (no sustitutivo del criterio profesional). La información debe ser validada.
                 </div>
             </div>
 
             {/* Right Section: Export PDF Button */}
             {data && (
-                <button style={{
-                    padding: '8px 16px',
-                    backgroundColor: 'white',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    color: 'var(--accent-primary)',
-                    fontSize: '0.85rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
-                    transition: 'all 0.2s'
-                }}
-                    onMouseEnter={(e) => {
-                        e.target.style.background = '#f8fafc';
-                        e.target.style.borderColor = 'var(--accent-primary)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.target.style.background = 'white';
-                        e.target.style.borderColor = 'var(--border-color)';
-                    }}
+                <button
+                    className="header-btn-export"
                     onClick={() => generatePDF(data)}
                 >
                     ⬇️ Exportar PDF
