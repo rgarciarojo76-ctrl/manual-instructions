@@ -15,7 +15,7 @@ export const generatePDF = async (data) => {
         const margin = 15;
         const availableWidth = pageWidth - (margin * 2);
         const colWidth = availableWidth / 2; // Split into 2 columns
-        const headerColor = [0, 180, 216]; // Cyan Blue (#00b4d8 approx)
+        const headerColor = [0, 159, 227]; // ASPY Corporate Blue (#009FE3)
         const borderColor = [0, 0, 0]; // Black
 
         // --- Helper Functions ---
@@ -56,7 +56,7 @@ export const generatePDF = async (data) => {
 
         // Top Right Title
         doc.setFontSize(10);
-        doc.setTextColor(0, 180, 216); // Cyan Blue
+        doc.setTextColor(0, 159, 227); // ASPY Corporate Blue
         doc.setFont("helvetica", "bold");
         doc.text("INFORMACIÓN PREVENCIÓN DE RIESGOS LABORALES", pageWidth - margin, 18, { align: 'right' });
 
