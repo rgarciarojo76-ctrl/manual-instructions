@@ -97,35 +97,46 @@ export const generatePDF = async (data, customSections = null) => {
                 return cleaned;
             };
 
-            // 1. Priority: Look for "Equipo" or "Denominación" (Explicit user request)
-            const equipmentLine = sourceCard.content.find(line =>
+            // 1. Find NAME (Denomination/Equipo OR First Line)
+            let rawName = "";
+            const denominationLine = sourceCard.content.find(line =>
                 line.toLowerCase().includes("equipo:") ||
                 line.toLowerCase().includes("denominación") ||
                 line.toLowerCase().includes("denominacion")
             );
 
-            // 2. Fallback: Use the FIRST line, BUT only if it DOES NOT look like a spec (Modelo, Peso, etc.)
-            let inferredLine = null;
+            // Fallback for name: First line if not technical
+            let firstLineCandidate = null;
             if (sourceCard.content.length > 0) {
                 const first = sourceCard.content[0].toLowerCase();
-                // List of keywords to AVOID treating as a name
-                const technicalKeys = ["modelo", "ref.", "peso", "dimensiones", "ancho", "largo", "alto", "tensión", "potencia"];
+                const technicalKeys = ["modelo", "ref.", "peso", "dimensiones", "ancho", "largo", "alto", "tensión", "potencia", "serie"];
                 const isTechnical = technicalKeys.some(key => first.includes(key));
+                if (!isTechnical) firstLineCandidate = sourceCard.content[0];
+            }
 
-                if (!isTechnical) {
-                    inferredLine = sourceCard.content[0];
+            rawName = denominationLine || firstLineCandidate || "Equipo de Trabajo";
+
+            // 2. Find MODEL
+            const modelLine = sourceCard.content.find(line => line.toLowerCase().includes("modelo"));
+
+            // 3. Format: "NAME (MODEL)"
+            const nameStr = extractValue(rawName).toUpperCase();
+            let finalTitle = nameStr;
+
+            if (modelLine) {
+                const modelStr = extractValue(modelLine).toUpperCase();
+                // Avoid duplication if name already contains model
+                if (!nameStr.includes(modelStr)) {
+                    finalTitle = `${nameStr} (${modelStr})`;
                 }
             }
 
-            // 3. Last Result: Use anything found or first line
-            const bestLine = equipmentLine || inferredLine || sourceCard.content[0];
+            equipmentName = finalTitle;
+        }
 
-            if (bestLine) {
-                const extracted = extractValue(bestLine);
-                if (extracted.length > 0) {
-                    equipmentName = extracted.toUpperCase();
-                }
-            }
+        // Final fallback
+        if (!equipmentName || equipmentName.length < 2) {
+            equipmentName = "EQUIPO DE TRABAJO";
         }
 
         // If extraction failed, fallback to generic ONLY if absolutely necessary, but user wants mandatory name.

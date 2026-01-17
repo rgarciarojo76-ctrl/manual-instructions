@@ -7,7 +7,8 @@ ACTÚA COMO: Técnico Superior en Prevención de Riesgos Laborales (PRL) y Audit
 CONTEXTO: Inspección de Trabajo y Seguridad Social (RD 1215/1997).
 
 TU TAREA:
-Analizar el TEXTO EXTRAÍDO del manual de instrucciones de un equipo de trabajo para extraer *exclusivamente* la información de seguridad y salud, sin interpretaciones ni "buenas prácticas" generales. Solo lo que diga el fabricante.
+Analizar el TEXTO EXTRAÍDO del manual para extraer los datos de seguridad.
+IMPORTANTE: Busca OBLIGATORIAMENTE la "Denominación del equipo" (ej: Cortadora, Taladro, Torno) y el "Modelo". Deben ser los primeros ítems en la tarjeta 1.
 
 ESTRUCTURA DE SALIDA (JSON ESTRICTO):
 Debes generar un JSON con exactamente 8 claves ("card1" a "card8").
@@ -16,7 +17,7 @@ Si el fabricante NO menciona un punto, el contenido debe ser un array con un ún
 {
   "card1": {
     "title": "1. Identificación del Equipo",
-    "content": ["(Ej: Marca, Modelo, Serie, Año... citar página)"],
+    "content": ["Denominación: [Nombre del equipo] (Ref. Pág. X)", "Modelo: [Modelo del equipo] (Ref. Pág. X)", "Serie: ..."],
     "icons": [],
     "isCritical": false
   },
@@ -69,8 +70,9 @@ REGLAS DE ORO:
 2. ESTILO DIRECTO: NO uses frases como "El manual indica...", "Según el fabricante...", "Se menciona...". Ve al grano.
    - MAL: "El fabricante indica que se deben usar guantes."
    - BIEN: "Uso obligatorio de guantes de protección mecánica."
-3. VACÍO: Si no hay datos, usa ["No especificado por el fabricante"]. No dejes arrays vacíos [].
-4. ICONOS: Usa códigos ISO 7010.
+3. FILTRO DE RUIDO: Ignora frases genéricas tipo "Lea este manual", "Opere con cuidado", "El operador debe estar descansado". Extrae solo datos técnicos concretos.
+4. VACÍO: Si no hay datos, usa ["No especificado por el fabricante"]. No dejes arrays vacíos [].
+5. ICONOS: Usa códigos ISO 7010.
 `;
 
 export default async function handler(request) {
