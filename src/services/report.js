@@ -60,12 +60,35 @@ export const generatePDF = async (data) => {
         doc.setFont("helvetica", "bold");
         doc.text("INFORMACIÓN PREVENCIÓN DE RIESGOS LABORALES", pageWidth - margin, 18, { align: 'right' });
 
-        // Equipment Name (Dynamic) if available in Card 1, else generic
+        // Equipment Name (Dynamic Extraction)
         let equipmentName = "EQUIPO DE TRABAJO";
+
         if (data.card1 && data.card1.content && data.card1.content.length > 0) {
-            // Try to extract model/name from first line of identification
-            const firstLine = data.card1.content[0];
-            if (firstLine.length < 50) equipmentName = firstLine.toUpperCase();
+            // Helper to clean up text (remove page refs, prefixes)
+            const cleanName = (text) => {
+                return text
+                    .replace(/\(Ref\..*?\)/gi, '') // Remove (Ref. Pág. X)
+                    .replace(/\(Pág\..*?\)/gi, '')
+                    .replace(/^(Nombre|Modelo|Equipo|Máquina|Denominación|Tipo):\s*/i, '') // Remove common prefixes
+                    .replace(/^\W+/, '') // Remove leading non-word chars (bullets)
+                    .trim();
+            };
+
+            // 1. Try to find a line that explicitly looks like a name
+            const explicitName = data.card1.content.find(line =>
+                line.toLowerCase().includes("nombre") ||
+                line.toLowerCase().includes("modelo") ||
+                line.toLowerCase().includes("máquina")
+            );
+
+            // 2. Fallback to the very first line (usually the name in this prompt structure)
+            const rawName = explicitName || data.card1.content[0];
+
+            // 3. Clean and Validate
+            const cleaned = cleanName(rawName);
+            if (cleaned.length > 2 && cleaned.length < 60) {
+                equipmentName = cleaned.toUpperCase();
+            }
         }
 
         doc.setTextColor(100); // Grey for subtitle
