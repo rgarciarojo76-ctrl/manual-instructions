@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const config = {
-    runtime: 'edge',
+  runtime: 'edge',
 };
 
 const SYSTEM_PROMPT = `
@@ -78,65 +78,65 @@ REGLAS DE ORO:
 `;
 
 export default async function handler(request) {
-    if (request.method !== 'POST') {
-        return new Response('Method Not Allowed', { status: 405 });
+  if (request.method !== 'POST') {
+    return new Response('Method Not Allowed', { status: 405 });
+  }
+
+  try {
+    const { pdfText } = await request.json();
+
+    if (!pdfText) {
+      return new Response(JSON.stringify({ error: 'No PDF text provided' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    try {
-        const { pdfText } = await request.json();
-
-        if (!pdfText) {
-            return new Response(JSON.stringify({ error: 'No PDF text provided' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            return new Response(JSON.stringify({ error: 'Server configuration error: Missing API Key' }), {
-                status: 500,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-
-        // Initialize Google Generative AI
-        const genAI = new GoogleGenerativeAI(apiKey);
-
-        // Use gemini-1.5-flash based on stability plan
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-        const result = await model.generateContent({
-            contents: [{
-                role: "user",
-                parts: [{ text: SYSTEM_PROMPT + "\n\nAquí tienes el manual extraído:\n\n" + pdfText }]
-            }],
-            generationConfig: {
-                responseMimeType: "application/json"
-            }
-        });
-
-        const text = result.response.text();
-
-        // Construct compatible response for existing frontend
-        const compatResponse = {
-            candidates: [{
-                content: {
-                    parts: [{ text: text }]
-                }
-            }]
-        };
-
-        return new Response(JSON.stringify(compatResponse), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-    } catch (error) {
-        console.error("API Error via SDK:", error);
-        return new Response(JSON.stringify({ error: `Internal Server Error: ${error.message}` }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'Server configuration error: Missing API Key' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
+
+    // Initialize Google Generative AI
+    const genAI = new GoogleGenerativeAI(apiKey);
+
+    // Use gemini-2.0-flash-001 as verified in user list
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
+
+    const result = await model.generateContent({
+      contents: [{
+        role: "user",
+        parts: [{ text: SYSTEM_PROMPT + "\n\nAquí tienes el manual extraído:\n\n" + pdfText }]
+      }],
+      generationConfig: {
+        responseMimeType: "application/json"
+      }
+    });
+
+    const text = result.response.text();
+
+    // Construct compatible response for existing frontend
+    const compatResponse = {
+      candidates: [{
+        content: {
+          parts: [{ text: text }]
+        }
+      }]
+    };
+
+    return new Response(JSON.stringify(compatResponse), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error("API Error via SDK:", error);
+    return new Response(JSON.stringify({ error: `Internal Server Error: ${error.message}` }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 }
