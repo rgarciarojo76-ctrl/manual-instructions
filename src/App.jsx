@@ -3,7 +3,7 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import MainContent from './components/MainContent';
 import './styles/global.css';
-import { convertFileToBase64 } from './services/pdf';
+import { convertFileToBase64, extractTextFromPDF } from './services/pdf';
 import { analyzeWithGemini } from './services/gemini';
 
 function App() {
@@ -19,16 +19,24 @@ function App() {
     setData(null);
 
     try {
-      console.log("Converting PDF to Base64...");
-      const base64Data = await convertFileToBase64(uploadedFile);
+      // 1. Try Text Extraction (Hybrid Strategy)
+      console.log("Attempting Text Extraction...");
+      const { fullText } = await extractTextFromPDF(uploadedFile);
 
-      if (!base64Data) {
-        throw new Error("No se pudo procesar el archivo PDF.");
+      if (fullText && fullText.length > 100) {
+        // Digital PDF Path
+        console.log("Digital PDF detected. Using Text Analysis...");
+        const result = await analyzeWithGemini(null, { pdfText: fullText });
+        setData(result);
+      } else {
+        // Scanned/Image PDF Path
+        console.log("Scanned PDF detected (low text). Switching to Multimodal...");
+        const base64Data = await convertFileToBase64(uploadedFile);
+        if (!base64Data) throw new Error("No se pudo procesar el archivo PDF.");
+
+        const result = await analyzeWithGemini(null, { pdfData: base64Data });
+        setData(result);
       }
-
-      console.log("Analyzing with Gemini 2.0 Multimodal...");
-      const result = await analyzeWithGemini(null, base64Data);
-      setData(result);
 
     } catch (err) {
       console.error(err);

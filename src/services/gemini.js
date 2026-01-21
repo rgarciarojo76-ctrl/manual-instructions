@@ -21,7 +21,7 @@ Reglas:
 4. FORMATO: Devuelve SOLO el JSON, sin bloques de código markdown.
 `;
 
-export const analyzeWithGemini = async (apiKey, pdfData) => {
+export const analyzeWithGemini = async (apiKey, payload) => {
     try {
         console.log("Sending request to Serverless Security Proxy...");
 
@@ -30,7 +30,7 @@ export const analyzeWithGemini = async (apiKey, pdfData) => {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ pdfData })
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
