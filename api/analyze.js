@@ -83,10 +83,10 @@ export default async function handler(request) {
   }
 
   try {
-    const { pdfText } = await request.json();
+    const { pdfData } = await request.json();
 
-    if (!pdfText) {
-      return new Response(JSON.stringify({ error: 'No PDF text provided' }), {
+    if (!pdfData) {
+      return new Response(JSON.stringify({ error: 'No PDF data provided' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -109,7 +109,10 @@ export default async function handler(request) {
     const result = await model.generateContent({
       contents: [{
         role: "user",
-        parts: [{ text: SYSTEM_PROMPT + "\n\nAquí tienes el manual extraído:\n\n" + pdfText }]
+        parts: [
+          { text: SYSTEM_PROMPT },
+          { inlineData: { mimeType: "application/pdf", data: pdfData } }
+        ]
       }],
       generationConfig: {
         responseMimeType: "application/json"
