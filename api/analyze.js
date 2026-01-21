@@ -1,5 +1,7 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 export const config = {
-    runtime: 'edge', // Edge runtime required for streaming to bypass Vercel timeouts
+    runtime: 'edge',
 };
 
 const SYSTEM_PROMPT = `
@@ -90,8 +92,7 @@ export default async function handler(request) {
             });
         }
 
-        const apiKey = process.env.GEMINI_API_KEY?.trim();
-
+        const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
             return new Response(JSON.stringify({ error: 'Server configuration error: Missing API Key' }), {
                 status: 500,
@@ -99,45 +100,41 @@ export default async function handler(request) {
             });
         }
 
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:streamGenerateContent?key=${apiKey}`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: SYSTEM_PROMPT + "\n\nAquí tienes el manual extraído:\n\n" + pdfText
-                        }]
-                    }],
-                    generationConfig: {
-                        responseMimeType: "application/json"
-                    }
-                })
+        // Initialize Google Generative AI
+        const genAI = new GoogleGenerativeAI(apiKey);
+
+        // Use gemini-1.5-flash based on stability plan
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const result = await model.generateContent({
+            contents: [{
+                role: "user",
+                parts: [{ text: SYSTEM_PROMPT + "\n\nAquí tienes el manual extraído:\n\n" + pdfText }]
+            }],
+            generationConfig: {
+                responseMimeType: "application/json"
             }
-        );
+        });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            return new Response(JSON.stringify({
-                error: `Upstream Error: ${errorData.error?.message || response.statusText}`
-            }), {
-                status: response.status,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
+        const text = result.response.text();
 
-        // Pipe the stream directly to the client
-        return new Response(response.body, {
+        // Construct compatible response for existing frontend
+        const compatResponse = {
+            candidates: [{
+                content: {
+                    parts: [{ text: text }]
+                }
+            }]
+        };
+
+        return new Response(JSON.stringify(compatResponse), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
 
     } catch (error) {
-        console.error("API Error:", error);
-        return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+        console.error("API Error via SDK:", error);
+        return new Response(JSON.stringify({ error: `Internal Server Error: ${error.message}` }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
