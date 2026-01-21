@@ -39,6 +39,11 @@ function App() {
     }
   };
 
+  const handleReset = () => {
+    setData(null);
+    setError(null);
+  };
+
   return (
     <div className="app-container">
       <Header data={data} />
@@ -47,6 +52,7 @@ function App() {
         analyzing={analyzing}
         error={error}
         onFileUpload={processFile}
+        onReset={handleReset}
       />
       <Footer />
     </div>

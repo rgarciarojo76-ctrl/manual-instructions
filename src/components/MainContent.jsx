@@ -70,7 +70,7 @@ const MOCK_DATA = {
     }
 };
 
-export default function MainContent({ data, analyzing, error, onFileUpload }) {
+export default function MainContent({ data, analyzing, error, onFileUpload, onReset }) {
     const [isDragging, setIsDragging] = useState(false);
 
     const handleFileUpload = (e) => {
@@ -95,13 +95,12 @@ export default function MainContent({ data, analyzing, error, onFileUpload }) {
         }
     };
 
-    // Kept for reference but not connected in UI currently based on App.jsx state
-    const handleLoadDemo = () => {
-        setAnalyzing(true);
-        setTimeout(() => {
-            setAnalyzing(false);
-            setData(MOCK_DATA);
-        }, 1000);
+    // Helper to extract title
+    const getDocumentTitle = () => {
+        if (!data || !data.card1 || !data.card1.content || data.card1.content.length === 0) return "Documento Analizado";
+        // Extract basic name from first line usually
+        let text = data.card1.content[0].replace(/\(Ref\..*?\)/g, '').replace('Denominación:', '').trim();
+        return text.length > 60 ? text.substring(0, 60) + '...' : text;
     };
 
     return (
@@ -123,6 +122,7 @@ export default function MainContent({ data, analyzing, error, onFileUpload }) {
 
             {!data && (
                 <div className="glass-panel intro-container">
+                    {/* ... (Existing Intro Content) ... */}
                     <div style={{ marginBottom: '2.5rem' }}>
                         <h1 className="header-title">
                             Análisis Manual de Instrucciones de Equipos de Trabajo
@@ -184,29 +184,41 @@ export default function MainContent({ data, analyzing, error, onFileUpload }) {
             )}
 
             {data && (
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', // Slightly smaller min-width for 4 column fit
-                    gap: 'var(--spacing-md)',
-                    marginBottom: 'var(--spacing-lg)'
-                }}>
-                    {/* Inline style override for desktop to force 4 columns if space allows */}
-                    <style>{`
+                <>
+                    {/* NEW: Results Header Bar */}
+                    <div className="results-header-bar">
+                        <h2 className="results-title">
+                            Análisis: <span style={{ fontWeight: 400 }}>{getDocumentTitle()}</span>
+                        </h2>
+                        <button className="btn-reset" onClick={onReset}>
+                            Analizar otro archivo
+                        </button>
+                    </div>
+
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', // Slightly smaller min-width for 4 column fit
+                        gap: 'var(--spacing-md)',
+                        marginBottom: 'var(--spacing-lg)'
+                    }}>
+                        {/* Inline style override for desktop to force 4 columns if space allows */}
+                        <style>{`
                         @media (min-width: 1200px) {
                             div[style*="display: grid"] {
                                 grid-template-columns: repeat(4, 1fr) !important;
                             }
                         }
                     `}</style>
-                    <RiskCard {...data.card1} onExportPdf={(card) => generateSinglePDF(card, data.card1.title)} />
-                    <RiskCard {...data.card2} onExportPdf={(card) => generateSinglePDF(card, data.card2.title)} />
-                    <RiskCard {...data.card3} onExportPdf={(card) => generateSinglePDF(card, data.card3.title)} />
-                    <RiskCard {...data.card4} onExportPdf={(card) => generateSinglePDF(card, data.card4.title)} />
-                    <RiskCard {...data.card5} onExportPdf={(card) => generateSinglePDF(card, data.card5.title)} />
-                    <RiskCard {...data.card6} onExportPdf={(card) => generateSinglePDF(card, data.card6.title)} />
-                    <RiskCard {...data.card7} onExportPdf={(card) => generateSinglePDF(card, data.card7.title)} />
-                    <RiskCard {...data.card8} onExportPdf={(card) => generateSinglePDF(card, data.card8.title)} />
-                </div>
+                        <RiskCard {...data.card1} onExportPdf={(card) => generateSinglePDF(card, data.card1.title)} />
+                        <RiskCard {...data.card2} onExportPdf={(card) => generateSinglePDF(card, data.card2.title)} />
+                        <RiskCard {...data.card3} onExportPdf={(card) => generateSinglePDF(card, data.card3.title)} />
+                        <RiskCard {...data.card4} onExportPdf={(card) => generateSinglePDF(card, data.card4.title)} />
+                        <RiskCard {...data.card5} onExportPdf={(card) => generateSinglePDF(card, data.card5.title)} />
+                        <RiskCard {...data.card6} onExportPdf={(card) => generateSinglePDF(card, data.card6.title)} />
+                        <RiskCard {...data.card7} onExportPdf={(card) => generateSinglePDF(card, data.card7.title)} />
+                        <RiskCard {...data.card8} onExportPdf={(card) => generateSinglePDF(card, data.card8.title)} />
+                    </div>
+                </>
             )}
         </main>
     );
