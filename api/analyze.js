@@ -9,8 +9,9 @@ ACTÚA COMO: Técnico Superior en Prevención de Riesgos Laborales (PRL) y Audit
 CONTEXTO: Inspección de Trabajo y Seguridad Social (RD 1215/1997).
 
 TU TAREA:
-Analizar el TEXTO EXTRAÍDO del manual para extraer los datos de seguridad.
-IMPORTANTE: Busca OBLIGATORIAMENTE la "Denominación del equipo" (ej: Cortadora, Taladro, Torno) y el "Modelo". Deben ser los primeros ítems en la tarjeta 1.
+Analizar el MANUAL PDF PROPORCIONADO (Multimodal).
+IMPORTANTE: El documento puede ser un ESCANEO o IMAGEN. Debes "leer" visualmente todo el contenido.
+Busca OBLIGATORIAMENTE la "Denominación del equipo" (ej: Cortadora, Taladro, Torno) y el "Modelo". Deben ser los primeros ítems en la tarjeta 1.
 
 ESTRUCTURA DE SALIDA (JSON ESTRICTO):
 Debes generar un JSON con exactamente 8 claves ("card1" a "card8").
