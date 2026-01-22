@@ -9,7 +9,7 @@ ACTÚA COMO: Técnico Superior en Prevención de Riesgos Laborales (PRL) y Audit
 CONTEXTO: Inspección de Trabajo y Seguridad Social (RD 1215/1997).
 
 TU TAREA:
-Analizar el MANUAL PDF PROPORCIONADO para extraer los datos de seguridad.
+Analizar el TEXTO EXTRAÍDO del manual para extraer los datos de seguridad.
 IMPORTANTE: Busca OBLIGATORIAMENTE la "Denominación del equipo" (ej: Cortadora, Taladro, Torno) y el "Modelo". Deben ser los primeros ítems en la tarjeta 1.
 
 ESTRUCTURA DE SALIDA (JSON ESTRICTO):
@@ -83,10 +83,10 @@ export default async function handler(request) {
   }
 
   try {
-    const { pdfText, pdfData } = await request.json();
+    const { pdfText } = await request.json();
 
-    if (!pdfText && !pdfData) {
-      return new Response(JSON.stringify({ error: 'No PDF text or data provided' }), {
+    if (!pdfText) {
+      return new Response(JSON.stringify({ error: 'No PDF text provided' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -106,24 +106,10 @@ export default async function handler(request) {
     // Use gemini-2.0-flash-001 (Confirmed Working Model)
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
 
-    let userContentParts = [];
-    if (pdfText) {
-      // Case 1: Digital PDF (Text Extraction)
-      // Use the Prompt that worked well previously
-      userContentParts = [{ text: SYSTEM_PROMPT + "\n\nAquí tienes el manual extraído:\n\n" + pdfText }];
-    } else {
-      // Case 2: Scanned PDF (Multimodal)
-      // Explicit visual instruction
-      userContentParts = [
-        { text: SYSTEM_PROMPT + "\nNota: El documento es una imagen/escaneo. Analízalo visualmente." },
-        { inlineData: { mimeType: "application/pdf", data: pdfData } }
-      ];
-    }
-
     const result = await model.generateContent({
       contents: [{
         role: "user",
-        parts: userContentParts
+        parts: [{ text: SYSTEM_PROMPT + "\n\nAquí tienes el manual extraído:\n\n" + pdfText }]
       }],
       generationConfig: {
         responseMimeType: "application/json"

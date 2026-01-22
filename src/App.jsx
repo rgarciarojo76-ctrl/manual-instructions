@@ -3,7 +3,7 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import MainContent from './components/MainContent';
 import './styles/global.css';
-import { convertFileToBase64, extractTextFromPDF } from './services/pdf';
+import { extractTextFromPDF } from './services/pdf';
 import { analyzeWithGemini } from './services/gemini';
 
 function App() {
@@ -19,24 +19,16 @@ function App() {
     setData(null);
 
     try {
-      // 1. Try Text Extraction (Hybrid Strategy)
-      console.log("Attempting Text Extraction...");
+      console.log("Extracting text...");
       const { fullText } = await extractTextFromPDF(uploadedFile);
 
-      if (fullText && fullText.length > 100) {
-        // Digital PDF Path
-        console.log("Digital PDF detected. Using Text Analysis...");
-        const result = await analyzeWithGemini(null, { pdfText: fullText });
-        setData(result);
-      } else {
-        // Scanned/Image PDF Path
-        console.log("Scanned PDF detected (low text). Switching to Multimodal...");
-        const base64Data = await convertFileToBase64(uploadedFile);
-        if (!base64Data) throw new Error("No se pudo procesar el archivo PDF.");
-
-        const result = await analyzeWithGemini(null, { pdfData: base64Data });
-        setData(result);
+      if (!fullText || fullText.length < 50) {
+        throw new Error("No se pudo extraer texto suficiente del PDF.");
       }
+
+      console.log("Analyzing with Gemini...");
+      const result = await analyzeWithGemini(null, { pdfText: fullText });
+      setData(result);
 
     } catch (err) {
       console.error(err);
