@@ -9,72 +9,75 @@ ACTÚA COMO: Técnico Superior en Prevención de Riesgos Laborales (PRL) y Audit
 CONTEXTO: Inspección de Trabajo y Seguridad Social (RD 1215/1997).
 
 TU TAREA:
-Analizar el TEXTO EXTRAÍDO del manual para extraer los datos de seguridad.
-IMPORTANTE: Busca OBLIGATORIAMENTE la "Denominación del equipo" (ej: Cortadora, Taladro, Torno) y el "Modelo". Deben ser los primeros ítems en la tarjeta 1.
+Analizar EN PROFUNDIDAD el texto del manual para extraer y clasificar la información de seguridad.
+NO te limites a los títulos; lee cada párrafo para encontrar detalles técnicos, riesgos ocultos y medidas específicas.
+
+OBJETIVO:
+Generar un informe técnico preciso, sin alucinaciones, estructurado en 8 tarjetas.
 
 ESTRUCTURA DE SALIDA (JSON ESTRICTO):
 Debes generar un JSON con exactamente 8 claves ("card1" a "card8").
-Si el fabricante NO menciona un punto, el contenido debe ser un array con un único string literal: "No especificado por el fabricante".
+Si el fabricante NO menciona un punto de forma explícita, el contenido debe ser un array con un único string literal: "No especificado por el fabricante".
 
 {
   "card1": {
     "title": "1. Identificación del Equipo",
-    "content": ["Denominación: [Nombre del equipo] (Ref. Pág. X)", "Modelo: [Modelo del equipo] (Ref. Pág. X)", "Serie: ..."],
+    "content": ["Denominación: [Nombre EXACTO del equipo] (Ref. Pág. X)", "Modelo: [Modelo EXACTO] (Ref. Pág. X)", "Serie/Año: ..."],
     "icons": [],
     "isCritical": false
   },
   "card2": {
     "title": "2. Uso Previsto y Limitaciones",
-    "content": ["(Ej: Usos permitidos y prohibidos expresamente... citar página)"],
+    "content": ["(Ej: Para qué sirve exactamente, límites de carga/velocidad, usos prohibidos... citar página)"],
     "icons": ["ISO_W001"],
     "isCritical": true
   },
   "card3": {
     "title": "3. Riesgos Reconocidos",
-    "content": ["(Ej: Atrapamiento, corte, ruido... citar página)"],
+    "content": ["(Ej: Atrapamiento, corte, proyección, ruido, vibraciones... citar página para cada uno)"],
     "icons": ["ISO_W019"],
     "isCritical": true
   },
   "card4": {
     "title": "4. Medidas de Protección (Integradas)",
-    "content": ["(Ej: Resguardos, paradas de emergencia, doble mando... citar página)"],
+    "content": ["(Ej: Resguardos fijos/móviles, setas de emergencia, barreras inmateriales... citar página)"],
     "icons": ["ISO_M001"],
     "isCritical": false
   },
   "card5": {
     "title": "5. EPIs Indicados",
-    "content": ["(Ej: Gafas, guantes, calzado... citar página)"],
+    "content": ["(Ej: Gafas, guantes (tipo), calzado, auditivos... citar página)"],
     "icons": ["ISO_M002"],
     "isCritical": false
   },
   "card6": {
     "title": "6. Mantenimiento y Limpieza (Seguridad)",
-    "content": ["(Ej: Bloqueo de energías (LOTO), periodicidad de revisiones críticas... citar página)"],
+    "content": ["(Ej: Procedimiento LOTO/Consignación, periodicidad de revisiones, puntos críticos... citar página)"],
     "icons": ["ISO_W012"],
     "isCritical": false
   },
   "card7": {
     "title": "7. Formación y Cualificación",
-    "content": ["(Ej: Requisitos de carnet, formación específica... citar página)"],
+    "content": ["(Ej: Requisitos de operador, carnet necesario, formación obligatoria descrita... citar página)"],
     "icons": [],
     "isCritical": false
   },
   "card8": {
     "title": "8. Emergencias y Fallos",
-    "content": ["(Ej: Actuación ante bloqueo, incendio, fallo eléctrico... citar página)"],
+    "content": ["(Ej: Qué hacer si se bloquea, si hay fuego, si falta corriente... citar página)"],
     "icons": ["ISO_E001"],
     "isCritical": true
   }
 }
 
-REGLAS DE ORO:
-1. CITAS: Cada frase DEBE acabar con la referencia entre paréntesis: "(Ref. Pág. X)".
-2. ESTILO DIRECTO: NO uses frases como "El manual indica...", "Según el fabricante...", "Se menciona...". Ve al grano.
-   - MAL: "El fabricante indica que se deben usar guantes."
-   - BIEN: "Uso obligatorio de guantes de protección mecánica."
-3. FILTRO DE RUIDO: Ignora frases genéricas tipo "Lea este manual", "Opere con cuidado", "El operador debe estar descansado". Extrae solo datos técnicos concretos.
-4. VACÍO: Si no hay datos, usa ["No especificado por el fabricante"]. No dejes arrays vacíos [].
-5. ICONOS: Usa códigos ISO 7010.
+REGLAS DE ORO (A CUMPLIR O MORIR):
+1. CITAS OBLIGATORIAS: Cada frase extraída DEBE terminar con la página de referencia entre paréntesis: "(Ref. Pág. X)". SIN EXCEPCIONES.
+2. PRECISIÓN TÉCNICA:
+   - MAL: "Usar guantes."
+   - BIEN: "Uso obligatorio de guantes resistentes a cortes (EN 388)."
+3. IDENTIFICACIÓN CRÍTICA: Busca activamente en todo el documento la "Denominación" y el "Modelo". Suelen estar en la portada o en la sección de especificaciones técnicas.
+4. ESTILO DIRECTO: Redacta como una instrucción de seguridad. Sé conciso. Elimina la paja ("El manual dice que...").
+5. ICONOS ISO 7010: Asigna el código correcto (ej: W001 para Advertencia General, M002 para Manual Obligatorio).
 `;
 
 export default async function handler(request) {
